@@ -40,4 +40,5 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan codeberg.org >> ~/.ssh/known_hosts
           git remote add mirror ${{ env.MIRROR_HOST }}:${{ env.MIRROR_USER }}/${{ env.MIRROR_REPO }}.git || true
-          git push mirror --mirror
+          git push mirror --all
+          git push mirror --tags
