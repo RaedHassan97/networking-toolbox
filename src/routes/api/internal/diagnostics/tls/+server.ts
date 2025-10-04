@@ -1,5 +1,5 @@
 import { json, error } from '@sveltejs/kit';
-import { connect } from 'node:tls';
+import * as tls from 'node:tls';
 import type { RequestHandler } from './$types';
 
 type Action = 'certificate' | 'versions' | 'alpn' | 'ocsp-stapling' | 'cipher-presets';
@@ -311,7 +311,7 @@ async function checkOCSPStapling(hostname: string, port: number = 443): Promise<
     let ocspResponseReceived = false;
     let ocspResponseData: Uint8Array | null = null;
 
-    const socket = connect(options, () => {
+    const socket = (tls as any).connect(options, () => {
       try {
         const cert = socket.getPeerCertificate(true);
 
@@ -377,7 +377,7 @@ async function testCipherPresets(hostname: string, port: number = 443): Promise<
   // First verify the host is reachable by attempting a basic TLS connection
   try {
     await new Promise<void>((resolve, reject) => {
-      const socket = connect(
+      const socket = (tls as any).connect(
         {
           host: hostname,
           port,

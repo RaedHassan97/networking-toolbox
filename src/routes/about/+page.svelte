@@ -1,6 +1,6 @@
 <script lang="ts">
   import '../../styles/pages.scss';
-  import { site, pages } from '$lib/constants/site';
+  import { site } from '$lib/constants/site';
   import ToolsCarousel from '$lib/components/global/ToolsCarousel.svelte';
   import { SUB_NAV } from '$lib/constants/nav';
 
@@ -14,11 +14,11 @@
 </script>
 
 <svelte:head>
-  <title>{pages.about.title}</title>
-  <meta name="description" content={pages.about.description} />
+  <title>About | Networking Toolbox </title>
+  <meta name="description" content={site.description} />
   <meta name="keywords" content={site.keywords} />
-  <meta property="og:title" content={pages.about.title} />
-  <meta property="og:description" content={pages.about.ogDescription} />
+  <meta property="og:title" content={site.title} />
+  <meta property="og:description" content={site.description} />
   <meta property="og:url" content="{site.url}/about" />
 </svelte:head>
 
