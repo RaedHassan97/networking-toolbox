@@ -14,7 +14,7 @@
 </script>
 
 <svelte:head>
-  <title>About | Networking Toolbox </title>
+  <title>About | Networking Toolbox</title>
   <meta name="description" content={site.description} />
   <meta name="keywords" content={site.keywords} />
   <meta property="og:title" content={site.title} />
