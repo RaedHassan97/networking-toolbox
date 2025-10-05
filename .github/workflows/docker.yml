@@ -47,18 +47,21 @@ jobs:
         run: |
           TAGS=""
 
+          # Convert repo name to lowercase for Docker Hub
+          REPO_LOWER=$(echo "${{ env.REPO_NAME }}" | tr '[:upper:]' '[:lower:]')
+
           if [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "${{ inputs.tag }}" ]]; then
             # Manual dispatch with custom tag
             TAG="${{ inputs.tag }}"
-            TAGS="docker.io/${{ env.REPO_NAME }}:${TAG},ghcr.io/${{ env.REPO_NAME }}:${TAG}"
+            TAGS="docker.io/${REPO_LOWER}:${TAG},ghcr.io/${{ env.REPO_NAME }}:${TAG}"
           elif [[ "${{ github.ref_type }}" == "tag" ]]; then
             # Git tag push
             TAG="${{ github.ref_name }}"
             TAG="${TAG#v}"  # Remove v prefix
-            TAGS="docker.io/${{ env.REPO_NAME }}:${TAG},ghcr.io/${{ env.REPO_NAME }}:${TAG}"
+            TAGS="docker.io/${REPO_LOWER}:${TAG},ghcr.io/${{ env.REPO_NAME }}:${TAG}"
           elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             # Main branch push
-            TAGS="docker.io/${{ env.REPO_NAME }}:latest,ghcr.io/${{ env.REPO_NAME }}:latest"
+            TAGS="docker.io/${REPO_LOWER}:latest,ghcr.io/${{ env.REPO_NAME }}:latest"
           fi
 
           echo "tags=${TAGS}" >> $GITHUB_OUTPUT

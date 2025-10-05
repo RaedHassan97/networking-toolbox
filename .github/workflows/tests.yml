@@ -1,6 +1,8 @@
 name: 🧪 Run Tests
 
 on:
+  pull_request:
+    types: [opened, synchronize, reopened]
   pull_request_target:
     types: [opened, synchronize, reopened]
   push:
@@ -18,8 +20,8 @@ permissions:
 
 env:
   # PR context helpers for conditional logic
-  IS_PR: ${{ github.event_name == 'pull_request_target' }}
-  IS_FORK: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.full_name != github.repository }}
+  IS_PR: ${{ github.event_name == 'pull_request' || github.event_name == 'pull_request_target' }}
+  IS_FORK: ${{ (github.event_name == 'pull_request' || github.event_name == 'pull_request_target') && github.event.pull_request.head.repo.full_name != github.repository }}
   HAS_BOT_TOKEN: ${{ secrets.BOT_TOKEN != '' }}
 
 jobs:
@@ -33,7 +35,7 @@ jobs:
       # Secure checkout for external PRs
       - uses: actions/checkout@v4
         with:
-          # For PRs from forks, check out the PR head to prevent token exposure
+          # For PRs from forks via pull_request_target, check out the PR head to prevent token exposure
           ref: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.sha || github.ref }}
 
       - uses: actions/setup-node@v4
@@ -65,7 +67,7 @@ jobs:
           path: test-result-unit.txt
 
       - name: Upload coverage to Codecov
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (env.IS_PR == 'true' && env.IS_FORK != 'true')
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -123,7 +125,7 @@ jobs:
       # Secure checkout for external PRs
       - uses: actions/checkout@v4
         with:
-          # For PRs from forks, check out the PR head to prevent naughty people finding my token
+          # For PRs from forks via pull_request_target, check out the PR head to prevent token exposure
           ref: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.sha || github.ref }}
 
       - uses: actions/setup-node@v4
@@ -201,7 +203,7 @@ jobs:
       # Secure checkout for external PRs
       - uses: actions/checkout@v4
         with:
-          # For PRs from forks, check out the PR head to prevent token exposure
+          # For PRs from forks via pull_request_target, check out the PR head to prevent token exposure
           ref: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.sha || github.ref }}
 
       - uses: actions/setup-node@v4
