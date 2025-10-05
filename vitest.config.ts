@@ -20,6 +20,7 @@ export default defineConfig({
         'src/hooks.server.ts',
         'src/service-worker.ts'
       ],
+      reporter: ['text', 'lcov', 'html'],
       thresholds: {
         global: {
           statements: 85,

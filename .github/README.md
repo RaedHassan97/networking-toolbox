@@ -29,21 +29,27 @@ You can then start the server with `node build`.
 <details>
 <summary>More Deployment Options</summary>
 
-#### Option 4 - Source: Static
-Follow the dev steps below.
-Then run `npm run build:static` to compile output.<br>
-And upload the contents of `./build` to any web server, CDN or static host.
-
-#### Option 5 - Source: Docker
-Follow the dev steps below.
-Then run `docker build -t networking-toolbox .` to build the image.<br>
-You can then start the container with `docker run -p 8080:80 networking-toolbox`.
-
-#### Option 6 - GitHub Pages
+#### Option 4 - GitHub Pages
 Fork the repo.<br>
 Head to the Actions tab, find the "Deploy to GitHub Pages" workflow, and trigger it.<br>
 Then go to Settings > Pages > Source and select the `gh-pages` branch.<br>
 Visit `https://<your-username>.github.io/networking-toolbox/` to see your deployed app.
+
+#### Option 5 - Source: Static
+Follow the dev steps below.
+Then run `npm run build:static` to compile output.<br>
+And upload the contents of `./build` to any web server, CDN or static host.
+
+#### Option 6 - Source: Docker
+Follow the dev steps below.
+Then run `docker build -t networking-toolbox .` to build the image.<br>
+You can then start the container with `docker run -p 8080:80 networking-toolbox`.
+
+#### Option 7 - Source: Other Platforms
+You can build the app from source for a variety of platforms. This is done via SvelteKit adapters.<br>
+First, follow the dev steps below.
+Then, simply set the `DEPLOY_ENV` environmental variable, to one of `vercel`, `node`, `docker`, `netlify`, `static` or just `auto`, and build the app<br>
+For example: `DEPLOY_ENV='node' npm run build`
 </details>
 
 ---
@@ -70,6 +76,30 @@ Before merging, code must pass all unit and end-to-end tests, as well as linting
 ```
 yarn test
 ```
+
+<details>
+  <summary><h4>Project Commands</h4></summary>
+
+##### Building
+- `npm run dev` - Starts the development server with hot reload/HMR
+- `npm run build` - Builds the app for production
+  - Note: choose adapter for platform by setting the `DEPLOY_ENV` var (see above)
+- `npm run preview` - Test your build locally (build required first)
+- `npm start` - Starts the production app (build required first)
+
+##### Testing
+- `npm test` — Run unit tests with Vitest
+- `npm run test:api` — Run API tests
+- `npm run test:e2e` — Run Playwright end-to-end tests
+- `npm run test:coverage` — Generate test coverage
+
+##### Checking
+- `npm run check` — SvelteKit checks (types & diagnostics)
+- `npm run types` — TypeScript-specific strict checking
+- `npm run lint` — ESLint on all TS and Svelte files
+- `npm run format` — Format files with Prettier
+- `npm run build-check` — Quitley check build works
+</details>
 
 ---
 
