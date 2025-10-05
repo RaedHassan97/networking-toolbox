@@ -25,7 +25,7 @@ on:
       repo: { description: 'Repository name (default: current repo name)' }
 
 jobs:
-  codeberg:
+  mirror:
     runs-on: ubuntu-latest
     env: # Get values for target repo from inputs, env vars, or fallback to defaults
       MIRROR_HOST: ${{ inputs.host || vars.MIRROR_HOST || 'git@codeberg.org' }}
@@ -33,15 +33,15 @@ jobs:
       MIRROR_REPO: ${{ inputs.repo || vars.MIRROR_REPO || github.event.repository.name }}
       HAS_SSH: ${{ secrets.MIRROR_SSH != '' }}
     steps:
-      - name: Cancel if SSH key not set
+      - name: ⏭️ Cancel if SSH key not set
         if: env.HAS_SSH != 'true'
         run: echo "::warning::MIRROR_SSH secret not set" && exit 1
         
-      - name: Checkout source repository
+      - name: ⤵️ Checkout source repository
         uses: actions/checkout@v4
         with: { fetch-depth: 0 }
           
-      - name: Mirror repository to target
+      - name: 🔁 Mirror repository to target
         id: mirror
         run: |
           set -euo pipefail
@@ -61,7 +61,7 @@ jobs:
             git push mirror --tags
           } |& tee "$LOG"
 
-      - name: Summarize
+      - name: ⤵️ Summarize
         if: always()
         continue-on-error: true
         run: |
@@ -75,8 +75,8 @@ jobs:
           fi
           if [ "${{ steps.mirror.outcome }}" = "success" ]; then
             {
-              echo "✅ **Completed**.<br>_You can now access the repository at_ \`${TARGET}\` 🥳"
-              echo; echo '```'; (tail -n 200 "$LOG" || true); echo '```'
+              echo "✅ **Completed**.<br>_You can now access the repository at_ \`${TARGET}\` 🥳<br>"
+              echo; echo '<details><summary>Output</summary><pre>'; (tail -n 200 "$LOG" || true); echo '</pre></details>'
             } >> "$GITHUB_STEP_SUMMARY"
           else
             {
