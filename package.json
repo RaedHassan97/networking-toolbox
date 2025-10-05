@@ -16,11 +16,9 @@
 		"build:node": "DEPLOY_ENV='node' npm run build",
 		"build:static": "DEPLOY_ENV='static' npm run build",
 		"test": "vitest",
-		"test:ui": "vitest --ui",
 		"test:coverage": "vitest --coverage",
 		"test:api": "vitest run --config tests/vitest.api.config.ts",
-		"test:e2e": "playwright test",
-		"test:e2e:ui": "playwright test --ui"
+		"test:e2e": "playwright test"
 	},
 	"dependencies": {},
 	"devDependencies": {
