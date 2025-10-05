@@ -2,7 +2,7 @@
 <h1 align="center">Networking Toolbox</h1>
 <p align="center">
   <i>The all-in-one offline-first networking toolbox for sysadmins</i><br>
-  🌐 <b><a href="https://permissionator.as93.net">networking-toolbox.as93.net</a></b>
+  🌐 <b><a href="https://networking-toolbox.as93.net">networking-toolbox.as93.net</a></b>
 </p>
 <a href="https://networking-toolbox.as93.net">
 <p align="center">
