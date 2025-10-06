@@ -1,8 +1,9 @@
 import { json, error } from '@sveltejs/kit';
 import * as tls from 'node:tls';
+import * as net from 'node:net';
 import type { RequestHandler } from './$types';
 
-type Action = 'certificate' | 'versions' | 'alpn' | 'ocsp-stapling' | 'cipher-presets';
+type Action = 'certificate' | 'versions' | 'alpn' | 'ocsp-stapling' | 'cipher-presets' | 'banner';
 
 interface BaseReq {
   action: Action;
@@ -42,7 +43,14 @@ interface CipherPresetsReq extends BaseReq {
   port?: number;
 }
 
-type RequestBody = CertificateReq | VersionsReq | ALPNReq | OCSPStaplingReq | CipherPresetsReq;
+interface BannerReq extends BaseReq {
+  action: 'banner';
+  host: string;
+  port: number;
+  timeout?: number;
+}
+
+type RequestBody = CertificateReq | VersionsReq | ALPNReq | OCSPStaplingReq | CipherPresetsReq | BannerReq;
 
 const TLS_VERSIONS = ['TLSv1', 'TLSv1.1', 'TLSv1.2', 'TLSv1.3'] as const;
 
@@ -517,6 +525,303 @@ async function testCipherPresets(hostname: string, port: number = 443): Promise<
   };
 }
 
+async function grabServiceBanner(host: string, port: number, timeout: number = 5000): Promise<any> {
+  const startTime = Date.now();
+
+  return new Promise((resolve, reject) => {
+    const socket = new net.Socket();
+    let banner = '';
+    let protocol = 'unknown';
+    let hasReceivedData = false;
+    let completed = false;
+
+    // Detect protocol based on port
+    const protocolMap: { [key: number]: string } = {
+      13: 'daytime',
+      21: 'ftp',
+      22: 'ssh',
+      23: 'telnet',
+      25: 'smtp',
+      43: 'whois',
+      53: 'dns',
+      80: 'http',
+      110: 'pop3',
+      143: 'imap',
+      443: 'https',
+      465: 'smtps',
+      587: 'submission',
+      993: 'imaps',
+      995: 'pop3s',
+      3306: 'mysql',
+      5432: 'postgresql',
+      6379: 'redis',
+      27017: 'mongodb',
+      3389: 'rdp',
+      5900: 'vnc',
+    };
+
+    protocol = protocolMap[port] || 'unknown';
+
+    // Hard timeout - always resolve within timeout period
+    const hardTimeout = setTimeout(() => {
+      if (!completed) {
+        completed = true;
+        socket.destroy();
+        const responseTime = Date.now() - startTime;
+        const analysis = analyzeBanner(banner, protocol, port);
+
+        resolve({
+          host,
+          port,
+          protocol,
+          banner: banner.trim(),
+          responseTime,
+          connected: true,
+          hasData: hasReceivedData,
+          analysis,
+          timestamp: new Date().toISOString(),
+        });
+      }
+    }, timeout);
+
+    socket.setTimeout(timeout);
+
+    socket.on('connect', () => {
+      // Send protocol-specific requests
+      if (protocol === 'http') {
+        socket.write(`HEAD / HTTP/1.1\r\nHost: ${host}\r\nConnection: close\r\n\r\n`);
+      } else if (protocol === 'whois') {
+        // WHOIS servers need a query to respond - send a test query
+        socket.write('example.com\r\n');
+      }
+
+      // Set a shorter timer for banner services
+      const bannerTimeout = setTimeout(() => {
+        if (!completed) {
+          completed = true;
+          clearTimeout(hardTimeout);
+          socket.destroy();
+          const responseTime = Date.now() - startTime;
+          const analysis = analyzeBanner(banner, protocol, port);
+
+          resolve({
+            host,
+            port,
+            protocol,
+            banner: banner.trim(),
+            responseTime,
+            connected: true,
+            hasData: hasReceivedData,
+            analysis,
+            timestamp: new Date().toISOString(),
+          });
+        }
+      }, 2000); // 2 second max for banner collection
+    });
+
+    socket.on('data', (data) => {
+      hasReceivedData = true;
+      banner += data.toString();
+
+      // For HTTP, close immediately after getting response
+      if (protocol === 'http' && banner.includes('\r\n\r\n')) {
+        if (!completed) {
+          completed = true;
+          clearTimeout(hardTimeout);
+          socket.destroy();
+          const responseTime = Date.now() - startTime;
+          const analysis = analyzeBanner(banner, protocol, port);
+
+          resolve({
+            host,
+            port,
+            protocol,
+            banner: banner.trim(),
+            responseTime,
+            connected: true,
+            hasData: hasReceivedData,
+            analysis,
+            timestamp: new Date().toISOString(),
+          });
+        }
+      }
+
+      // For WHOIS, close after getting some response data (they typically respond quickly)
+      if (protocol === 'whois' && banner.length > 50) {
+        setTimeout(() => {
+          if (!completed) {
+            completed = true;
+            clearTimeout(hardTimeout);
+            socket.destroy();
+            const responseTime = Date.now() - startTime;
+            const analysis = analyzeBanner(banner, protocol, port);
+
+            resolve({
+              host,
+              port,
+              protocol,
+              banner: banner.trim(),
+              responseTime,
+              connected: true,
+              hasData: hasReceivedData,
+              analysis,
+              timestamp: new Date().toISOString(),
+            });
+          }
+        }, 500); // Give it a bit more time to receive the full response
+      }
+    });
+
+    socket.on('error', (err) => {
+      if (!completed) {
+        completed = true;
+        clearTimeout(hardTimeout);
+        reject(err);
+      }
+    });
+
+    socket.on('timeout', () => {
+      if (!completed) {
+        completed = true;
+        clearTimeout(hardTimeout);
+        socket.destroy();
+        const responseTime = Date.now() - startTime;
+        const analysis = analyzeBanner(banner, protocol, port);
+
+        resolve({
+          host,
+          port,
+          protocol,
+          banner: banner.trim(),
+          responseTime,
+          connected: true,
+          hasData: hasReceivedData,
+          analysis,
+          timestamp: new Date().toISOString(),
+        });
+      }
+    });
+
+    socket.on('close', () => {
+      if (!completed) {
+        completed = true;
+        clearTimeout(hardTimeout);
+        const responseTime = Date.now() - startTime;
+        const analysis = analyzeBanner(banner, protocol, port);
+
+        resolve({
+          host,
+          port,
+          protocol,
+          banner: banner.trim(),
+          responseTime,
+          connected: true,
+          hasData: hasReceivedData,
+          analysis,
+          timestamp: new Date().toISOString(),
+        });
+      }
+    });
+
+    // Start the connection
+    socket.connect(port, host);
+  });
+}
+
+function analyzeBanner(banner: string, protocol: string, port: number): any {
+  const analysis: any = {
+    software: null,
+    version: null,
+    os: null,
+    security: [],
+  };
+
+  if (!banner) return analysis;
+
+  const lowerBanner = banner.toLowerCase();
+
+  // Software detection patterns
+  const softwarePatterns = [
+    { pattern: /openssh[_\s]+(\d+\.\d+)/i, software: 'OpenSSH' },
+    { pattern: /microsoft-iis\/(\d+\.\d+)/i, software: 'Microsoft IIS' },
+    { pattern: /apache\/(\d+\.\d+)/i, software: 'Apache HTTP Server' },
+    { pattern: /nginx\/(\d+\.\d+)/i, software: 'nginx' },
+    { pattern: /postfix/i, software: 'Postfix' },
+    { pattern: /exim/i, software: 'Exim' },
+    { pattern: /sendmail/i, software: 'Sendmail' },
+    { pattern: /mysql[_\s]+(\d+\.\d+)/i, software: 'MySQL' },
+    { pattern: /postgresql[_\s]+(\d+\.\d+)/i, software: 'PostgreSQL' },
+    { pattern: /redis[_\s]*server[_\s]*v?(\d+\.\d+)/i, software: 'Redis' },
+    { pattern: /mongodb[_\s]+(\d+\.\d+)/i, software: 'MongoDB' },
+    { pattern: /proftpd[_\s]+(\d+\.\d+)/i, software: 'ProFTPD' },
+    { pattern: /vsftpd[_\s]+(\d+\.\d+)/i, software: 'vsftpd' },
+    { pattern: /dovecot/i, software: 'Dovecot' },
+    { pattern: /courier/i, software: 'Courier' },
+  ];
+
+  for (const { pattern, software } of softwarePatterns) {
+    const match = banner.match(pattern);
+    if (match) {
+      analysis.software = software;
+      if (match[1]) {
+        analysis.version = match[1];
+      }
+      break;
+    }
+  }
+
+  // OS detection
+  const osPatterns = [
+    { pattern: /ubuntu/i, os: 'Ubuntu Linux' },
+    { pattern: /debian/i, os: 'Debian Linux' },
+    { pattern: /centos/i, os: 'CentOS Linux' },
+    { pattern: /redhat|rhel/i, os: 'Red Hat Linux' },
+    { pattern: /windows/i, os: 'Microsoft Windows' },
+    { pattern: /freebsd/i, os: 'FreeBSD' },
+    { pattern: /openbsd/i, os: 'OpenBSD' },
+    { pattern: /linux/i, os: 'Linux' },
+  ];
+
+  for (const { pattern, os } of osPatterns) {
+    if (pattern.test(banner)) {
+      analysis.os = os;
+      break;
+    }
+  }
+
+  // Security analysis
+  if (protocol === 'ssh') {
+    if (lowerBanner.includes('openssh')) {
+      const version = banner.match(/openssh[_\s]+(\d+)\.(\d+)/i);
+      if (version) {
+        const major = parseInt(version[1]);
+        const minor = parseInt(version[2]);
+        if (major < 8 || (major === 8 && minor < 0)) {
+          analysis.security.push('Consider upgrading OpenSSH for latest security patches');
+        }
+      }
+    }
+
+    if (lowerBanner.includes('protocol 1')) {
+      analysis.security.push('SSH Protocol 1 detected - upgrade to Protocol 2');
+    }
+  }
+
+  if (protocol === 'ftp' && port === 21) {
+    analysis.security.push('Unencrypted FTP - consider using SFTP or FTPS');
+  }
+
+  if (protocol === 'telnet') {
+    analysis.security.push('Telnet is unencrypted - use SSH instead');
+  }
+
+  if (protocol === 'smtp' && port === 25) {
+    analysis.security.push('Unencrypted SMTP - consider using STARTTLS or port 587');
+  }
+
+  return analysis;
+}
+
 export const POST: RequestHandler = async ({ request }) => {
   try {
     const body: RequestBody = await request.json();
@@ -575,6 +880,28 @@ export const POST: RequestHandler = async ({ request }) => {
 
         const result = await testCipherPresets(hostname, port);
         return json({ ...result, hostname, port });
+      }
+
+      case 'banner': {
+        const { host, port, timeout = 5000 } = body as BannerReq;
+
+        // Validate host
+        if (!host || typeof host !== 'string' || host.trim() === '') {
+          throw error(400, 'Invalid host provided');
+        }
+
+        // Validate port
+        if (!port || port < 1 || port > 65535) {
+          throw error(400, 'Invalid port number (1-65535)');
+        }
+
+        // Validate timeout
+        if (timeout < 1000 || timeout > 10000) {
+          throw error(400, 'Invalid timeout (1000-10000ms)');
+        }
+
+        const result = await grabServiceBanner(host, port, timeout);
+        return json(result);
       }
 
       default:

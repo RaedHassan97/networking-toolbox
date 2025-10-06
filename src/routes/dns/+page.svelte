@@ -4,14 +4,16 @@
   import type { NavItem, NavGroup } from '$lib/constants/nav';
   import '../../styles/pages.scss';
 
-  // Extract tools for DNS section
+  // Extract tools for DNS section (excluding category headers with title)
   function extractNavItems(items: (NavItem | NavGroup)[]): NavItem[] {
     const navItems: NavItem[] = [];
     for (const item of items) {
-      if ('href' in item) {
-        navItems.push(item);
-      } else if ('title' in item && 'items' in item) {
-        navItems.push(...item.items);
+      if ('items' in item) {
+        // It's a category - extract its children recursively
+        navItems.push(...extractNavItems(item.items));
+      } else if ('href' in item && 'label' in item && !('title' in item)) {
+        // It's a tool (has href and label but no title)
+        navItems.push(item as NavItem);
       }
     }
     return navItems;
