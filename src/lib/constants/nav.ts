@@ -25,13 +25,13 @@ export const STANDALONE_PAGES: NavItem[] = [
   {
     href: makePath('/bookmarks'),
     label: 'Bookmarks',
-    description: 'Saved network calculations and frequently used tools',
+    description: 'Save and organize network calculations and tool results',
     keywords: ['bookmarks', 'saved', 'favorites', 'shortcuts', 'calculations'],
   },
   {
     href: makePath('/offline'),
     label: 'Offline',
-    description: 'Offline mode and cached calculations',
+    description: 'Access cached tools and data offline',
     keywords: ['offline', 'cache', 'no-internet', 'local'],
   },
 ];
@@ -40,7 +40,7 @@ export const TOP_NAV: NavItem[] = [
   {
     href: makePath('/subnetting'),
     label: 'Subnetting',
-    description: 'Subnet calculators and network planning tools for IPv4, IPv6, VLSM, and supernetting',
+    description: 'Subnet calculators for IPv4, IPv6, VLSM, supernetting',
     keywords: [
       'subnet',
       'calculator',
@@ -57,12 +57,14 @@ export const TOP_NAV: NavItem[] = [
       'hosts',
       'addressing',
       'allocation',
+      'ip calculator',
+      'subnet tool',
     ],
   },
   {
     href: makePath('/cidr'),
     label: 'CIDR',
-    description: 'CIDR tools and converters for network analysis and optimization',
+    description: 'CIDR notation tools, converters, and calculators',
     keywords: [
       'cidr',
       'subnet',
@@ -84,7 +86,7 @@ export const TOP_NAV: NavItem[] = [
   {
     href: makePath('/ip-address-convertor'),
     label: 'IP Tools',
-    description: 'IP address converters, validators, generators, and format transformation tools',
+    description: 'IP address converters, validators, and generators',
     keywords: [
       'ip',
       'address',
@@ -103,12 +105,14 @@ export const TOP_NAV: NavItem[] = [
       'enumerate',
       'validation',
       'transformation',
+      'ip format',
+      'address converter',
     ],
   },
   {
     href: makePath('/dns'),
     label: 'DNS Tools',
-    description: 'DNS record generators, validators, zone tools, and DNSSEC utilities',
+    description: 'DNS record generators, validators, and DNSSEC tools',
     keywords: [
       'dns',
       'records',
@@ -130,12 +134,14 @@ export const TOP_NAV: NavItem[] = [
       'dkim',
       'soa',
       'ns',
+      'nameserver',
+      'domain',
     ],
   },
   {
     href: makePath('/diagnostics'),
     label: 'Lookups',
-    description: 'Network diagnostics, DNS lookups, HTTP analysis, TLS testing, and connectivity checks',
+    description: 'Network diagnostics and connectivity testing',
     keywords: [
       'diagnostics',
       'lookup',
@@ -154,12 +160,14 @@ export const TOP_NAV: NavItem[] = [
       'rdap',
       'whois',
       'analysis',
+      'dns checker',
+      'ssl test',
     ],
   },
   {
     href: makePath('/reference'),
     label: 'Ref',
-    description: 'Networking reference guides, explanations, and quick lookup tables',
+    description: 'Networking reference guides and lookup tables',
     keywords: [
       'reference',
       'guide',
@@ -189,38 +197,57 @@ export const SUB_NAV: Record<string, (NavItem | NavGroup)[]> = {
     {
       href: makePath('/subnetting/ipv4-subnet-calculator'),
       label: 'IPv4 Subnet Calculator',
-      description:
-        'Calculate subnet information, network addresses, broadcast addresses, and host ranges with visual network analysis',
+      description: 'Calculate subnet masks, network addresses, broadcast addresses, and host ranges',
       icon: 'subnet-calculator',
-      keywords: ['subnet', 'calculator', 'ipv4', 'network', 'broadcast', 'hosts', 'cidr', 'netmask'],
+      keywords: [
+        'subnet',
+        'calculator',
+        'ipv4',
+        'network',
+        'broadcast',
+        'hosts',
+        'cidr',
+        'netmask',
+        'wildcard',
+        'gateway',
+        'usable hosts',
+      ],
     },
     {
       href: makePath('/subnetting/ipv6-subnet-calculator'),
       label: 'IPv6 Subnet Calculator',
-      description: 'Calculate IPv6 subnets with 128-bit addressing and modern network prefix planning',
+      description: 'Calculate IPv6 subnets and network prefixes',
       icon: 'ipv6-subnet-calculator',
       keywords: ['subnet', 'calculator', 'ipv6', 'network', 'prefix', '128-bit', 'addressing'],
     },
     {
       href: makePath('/subnetting/vlsm-calculator'),
       label: 'VLSM Calculator',
-      description:
-        'Variable Length Subnet Mask calculator to break networks into multiple smaller subnets with optimal allocation',
+      description: 'Variable Length Subnet Mask calculator for splitting networks into smaller subnets',
       icon: 'vlsm-calculator',
-      keywords: ['vlsm', 'variable', 'length', 'subnet', 'mask', 'calculator', 'subnets', 'allocation'],
+      keywords: [
+        'vlsm',
+        'variable',
+        'length',
+        'subnet',
+        'mask',
+        'calculator',
+        'subnets',
+        'allocation',
+        'network design',
+      ],
     },
     {
       href: makePath('/subnetting/supernet-calculator'),
       label: 'Supernet Calculator',
-      description:
-        'Aggregate multiple networks into supernets for route summarization and efficient routing table management',
+      description: 'Aggregate multiple networks into supernets for route summarization',
       icon: 'supernet-calculator',
       keywords: ['supernet', 'calculator', 'aggregate', 'route', 'summarization', 'routing', 'table'],
     },
     {
       href: makePath('/subnetting/planner'),
       label: 'Subnet Planner',
-      description: 'Design VLSM networks with drag-and-drop subnet planning and optimize address allocation strategies',
+      description: 'Design VLSM networks with drag-and-drop planning',
       icon: 'subnet-planner',
       keywords: ['subnet', 'planner', 'design', 'vlsm', 'networks', 'planning', 'allocation'],
     },
@@ -264,43 +291,42 @@ export const SUB_NAV: Record<string, (NavItem | NavGroup)[]> = {
     {
       href: makePath('/cidr/next-available'),
       label: 'Next Available Subnet',
-      description: 'Find available subnets from pools minus allocations with first-fit or best-fit policies',
+      description: 'Find available subnets in pools using first-fit or best-fit algorithms',
       icon: 'next-available-subnet',
       keywords: ['next', 'available', 'subnet', 'pools', 'allocations', 'first-fit', 'best-fit'],
     },
     {
       href: makePath('/cidr/gaps'),
       label: 'Free Space Finder',
-      description: 'List all free blocks in pool CIDRs minus allocations, filterable by target prefix length',
+      description: 'List unallocated IP blocks in CIDR pools by prefix length',
       icon: 'cidr-gaps',
       keywords: ['free', 'space', 'gaps', 'finder', 'blocks', 'pools', 'allocations', 'prefix'],
     },
     {
       href: makePath('/cidr/deaggregate'),
       label: 'CIDR Deaggregate',
-      description: 'Decompose CIDR blocks and ranges into uniform target prefix subnets (e.g., break into /24s)',
+      description: 'Break CIDR blocks into smaller uniform subnets (e.g., split into /24s)',
       icon: 'cidr-deaggregate',
       keywords: ['cidr', 'deaggregate', 'decompose', 'break', 'uniform', 'prefix', 'subnets', 'split'],
     },
     {
       href: makePath('/cidr/compare'),
       label: 'CIDR Compare',
-      description:
-        'Compare two lists of CIDR blocks to identify added, removed, and unchanged entries after normalization',
+      description: 'Compare CIDR lists to show added, removed, and unchanged blocks',
       icon: 'cidr-compare',
       keywords: ['cidr', 'compare', 'diff', 'audit', 'added', 'removed', 'unchanged', 'normalization'],
     },
     {
       href: makePath('/cidr/allocator'),
       label: 'CIDR Allocator',
-      description: 'Pack requested subnet sizes into network pools using bin-packing algorithms (first-fit, best-fit)',
+      description: 'Allocate subnets into network pools using first-fit or best-fit algorithms',
       icon: 'cidr-allocator',
       keywords: ['cidr', 'allocator', 'bin-packing', 'first-fit', 'best-fit', 'subnet', 'allocation', 'packing'],
     },
     {
       href: makePath('/cidr/alignment'),
       label: 'CIDR Alignment',
-      description: 'Check if IP addresses and ranges align to CIDR prefix boundaries with optimization suggestions',
+      description: 'Check if IP addresses align to CIDR prefix boundaries',
       icon: 'cidr-alignment',
       keywords: [
         'cidr',
@@ -347,7 +373,7 @@ export const SUB_NAV: Record<string, (NavItem | NavGroup)[]> = {
         {
           href: makePath('/cidr/set-operations/diff'),
           label: 'Difference (A - B)',
-          description: 'Compute A - B set operations on CIDR blocks, ranges, and IP addresses',
+          description: 'Subtract CIDR blocks, ranges, and IPs from another set',
           icon: 'diff',
           keywords: [
             'set',
@@ -369,7 +395,7 @@ export const SUB_NAV: Record<string, (NavItem | NavGroup)[]> = {
         {
           href: makePath('/cidr/set-operations/overlap'),
           label: 'Overlap (A ∩ B)',
-          description: 'Detect intersections between two sets of IP addresses and ranges',
+          description: 'Find overlapping IPs and ranges between two sets',
           icon: 'intersection',
           keywords: [
             'set',
@@ -390,7 +416,7 @@ export const SUB_NAV: Record<string, (NavItem | NavGroup)[]> = {
         {
           href: makePath('/cidr/set-operations/contains'),
           label: 'Contains (A ⊆ B)',
-          description: 'Check if one set fully contains another with detailed containment analysis',
+          description: 'Check if one IP set contains another',
           icon: 'containment',
           keywords: [
             'set',
@@ -1124,6 +1150,25 @@ export const SUB_NAV: Record<string, (NavItem | NavGroup)[]> = {
           keywords: ['dnssec', 'ad', 'flag', 'authenticated', 'data', 'doh', 'validation', 'security', 'dns'],
         },
         {
+          href: makePath('/diagnostics/dns/dnssec-validation-chain'),
+          label: 'DNSSEC Validation Chain',
+          description: 'Validate full DNSSEC chain from root to domain with DS/DNSKEY matching and RRSIG verification',
+          icon: 'dnssec-chain',
+          keywords: [
+            'dnssec',
+            'validation',
+            'chain',
+            'ds',
+            'dnskey',
+            'rrsig',
+            'trust',
+            'security',
+            'dns',
+            'root',
+            'authenticated',
+          ],
+        },
+        {
           href: makePath('/diagnostics/dns/soa-serial'),
           label: 'SOA Serial Analyzer',
           description:
@@ -1214,6 +1259,20 @@ export const SUB_NAV: Record<string, (NavItem | NavGroup)[]> = {
           icon: 'http-perf',
           keywords: ['http', 'performance', 'timing', 'dns', 'tcp', 'tls', 'ttfb', 'metrics', 'analyzer'],
         },
+        {
+          href: makePath('/diagnostics/http/compression'),
+          label: 'HTTP Compression Check',
+          description: 'Test gzip, brotli, and deflate compression support and measure size differences',
+          icon: 'archive',
+          keywords: ['http', 'compression', 'gzip', 'brotli', 'deflate', 'size', 'reduction', 'performance'],
+        },
+        {
+          href: makePath('/diagnostics/http/cookie-security'),
+          label: 'Cookie Security Inspector',
+          description: 'Inspect Set-Cookie headers for Secure, HttpOnly, SameSite, and other security attributes',
+          icon: 'cookie',
+          keywords: ['http', 'cookie', 'security', 'secure', 'httponly', 'samesite', 'csrf', 'xss', 'attributes'],
+        },
       ],
     },
     {
@@ -1256,6 +1315,13 @@ export const SUB_NAV: Record<string, (NavItem | NavGroup)[]> = {
             'Probe connectivity with preset cipher lists (modern/intermediate/legacy) and assess security level',
           icon: 'tls-cipher-presets',
           keywords: ['tls', 'cipher', 'presets', 'modern', 'intermediate', 'legacy', 'security', 'suites', 'probe'],
+        },
+        {
+          href: makePath('/diagnostics/tls/banner'),
+          label: 'Service Banner Grabber',
+          description: 'Retrieve service banners from SSH, SMTP, HTTP, FTP, and other network services',
+          icon: 'terminal',
+          keywords: ['banner', 'service', 'ssh', 'smtp', 'ftp', 'http', 'telnet', 'fingerprinting', 'reconnaissance'],
         },
       ],
     },
@@ -1889,10 +1955,10 @@ function extractAllNavItems(navStructure: (NavItem | NavGroup)[]): NavItem[] {
 
   for (const item of navStructure) {
     if ('items' in item) {
-      // It's a NavGroup (might have href too, but we only want its items)
-      items.push(...item.items);
+      // It's a NavGroup - recursively extract items from its children
+      items.push(...extractAllNavItems(item.items));
     } else if ('href' in item && 'label' in item) {
-      // It's a NavItem (has href and label)
+      // It's a NavItem (has href and label, but no items)
       items.push(item as NavItem);
     }
   }

@@ -166,7 +166,7 @@ describe('nav.ts', () => {
         const details = getPageDetails('/subnetting/ipv4-subnet-calculator');
         expect(details).toBeDefined();
         expect(details?.title).toBe('IPv4 Subnet Calculator');
-        expect(details?.description).toContain('Calculate subnet information');
+        expect(details?.description).toContain('Calculate subnet masks');
         expect(details?.keywords).toBeInstanceOf(Array);
         expect(details?.keywords).toContain('subnet');
       });

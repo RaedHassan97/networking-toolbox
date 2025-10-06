@@ -47,6 +47,16 @@
   // Dynamic favicon based on page icon
   const dynamicFavicon = $derived.by(() => {
     void faviconTrigger; // Include in order to force updates when theme changes
+
+    // Check if we're on an error page
+    const isErrorPage = $page.status >= 400;
+    if (isErrorPage) {
+      const errorFaviconDataUri = generateFaviconDataUri('lost');
+      if (errorFaviconDataUri) {
+        return errorFaviconDataUri;
+      }
+    }
+
     const currentPath = $page.url.pathname;
     const pageDetailsWithIcon = getPageDetailsWithIcon(currentPath);
 

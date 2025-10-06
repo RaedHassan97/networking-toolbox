@@ -10,6 +10,8 @@ export const site = {
   url: 'https://networking-toolbox.as93.net',
   image: 'https://networking-toolbox.as93.net/og-image.png',
   repo: 'https://github.com/lissy93/networking-toolbox',
+  mirror: 'https://codeberg.org/alicia/networking-toolbox',
+  docker: 'https://hub.docker.com/r/lissy93/networking-toolbox',
 };
 
 export const about = {

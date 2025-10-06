@@ -81,22 +81,27 @@
 
     switch ($navbarDisplay) {
       case 'bookmarked':
-        items = $bookmarks.map((bookmark) => ({
-          href: bookmark.href,
-          label: bookmark.label,
-          icon: bookmark.icon,
-          description: bookmark.description,
-        }));
+        items = $bookmarks
+          .filter((bookmark) => bookmark.label)
+          .map((bookmark) => ({
+            href: bookmark.href,
+            label: bookmark.label,
+            icon: bookmark.icon,
+            description: bookmark.description,
+          }));
         // Show most recent bookmarks first
         return items.reverse();
 
       case 'frequent':
-        items = $frequentlyUsedTools.slice(0, 8).map((tool) => ({
-          href: tool.href,
-          label: tool.label || 'Untitled Tool',
-          icon: tool.icon,
-          description: tool.description,
-        }));
+        items = $frequentlyUsedTools
+          .filter((tool) => tool.label)
+          .slice(0, 8)
+          .map((tool) => ({
+            href: tool.href,
+            label: tool.label || 'Untitled Tool',
+            icon: tool.icon,
+            description: tool.description,
+          }));
         // Already sorted by frequency, no need to reverse
         return items;
 
@@ -106,7 +111,7 @@
       case 'default':
       default:
         // Keep default navigation items in their original order
-        return TOP_NAV;
+        return TOP_NAV.filter((item) => item.label);
     }
   })();
 
@@ -158,8 +163,8 @@
           <div class="primary-dropdown">
             <div class="primary-content">
               {#each getSubPages(item.href) as subItem ('href' in subItem ? subItem.href : subItem.title)}
-                {#if 'href' in subItem}
-                  <!-- Direct nav item -->
+                {#if 'href' in subItem && subItem.label}
+                  <!-- Direct nav item with label -->
                   <a
                     href={subItem.href}
                     class="dropdown-link {isActive(currentPath, subItem.href) ? 'active' : ''}"
@@ -214,7 +219,7 @@
                 on:mouseleave={hideSubDropdown}
               >
                 <div class="secondary-content">
-                  {#each subItem.items as groupItem (groupItem.href)}
+                  {#each subItem.items.filter((i) => i.label) as groupItem (groupItem.href)}
                     <a
                       href={groupItem.href}
                       class="dropdown-link {isActive(currentPath, groupItem.href) ? 'active' : ''}"

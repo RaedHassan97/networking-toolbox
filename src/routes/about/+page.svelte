@@ -1,6 +1,6 @@
 <script lang="ts">
   import '../../styles/pages.scss';
-  import { site } from '$lib/constants/site';
+  import { author, site } from '$lib/constants/site';
   import ToolsCarousel from '$lib/components/global/ToolsCarousel.svelte';
   import { SUB_NAV } from '$lib/constants/nav';
 
@@ -51,9 +51,9 @@
     <h3>External links</h3>
     <ul>
       <li><a href={site.repo}>Source on GitHub</a></li>
-      <li><a href={site.repo}>CodeBerg mirror</a></li>
-      <li><a href={site.repo}>DockerHub</a></li>
-      <li><a href={site.repo}>More apps...</a></li>
+      <li><a href={site.mirror}>CodeBerg mirror</a></li>
+      <li><a href={site.docker}>DockerHub</a></li>
+      <li><a href={author.portfolio}>More apps...</a></li>
     </ul>
   </div>
 </section>

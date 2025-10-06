@@ -3,7 +3,11 @@
  * Common helpers for testing API endpoints against Swagger specification
  */
 
-export const API_BASE_URL = 'http://localhost:4175';
+// @ts-ignore-next
+export const PORT = process.env.PORT || '4175';
+export const HOST = 'localhost';
+export const PROTO = 'http://';
+export const API_BASE_URL = `${PROTO}${HOST}:${PORT}`;
 
 /**
  * Convert IP object to dotted decimal notation

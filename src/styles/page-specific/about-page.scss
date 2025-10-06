@@ -18,9 +18,9 @@ section:not(.row) {
 }
 
 h3 {
-  margin-bottom: var(--spacing-sm);
   opacity: 0.8;
   font-size: var(--font-size-md);
+  margin: var(--spacing-md) 0 var(--spacing-sm) 0;
 }
 
 a {
