@@ -47,8 +47,8 @@
   ];
 
   $effect(() => {
-    if (service && service !== 'custom' && services[service]) {
-      port = services[service].port;
+    if (service && service !== 'custom' && services[service as keyof typeof services]) {
+      port = services[service as keyof typeof services].port;
     }
   });
 

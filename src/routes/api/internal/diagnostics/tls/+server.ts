@@ -619,7 +619,7 @@ async function grabServiceBanner(host: string, port: number, timeout: number = 5
       }, 2000); // 2 second max for banner collection
     });
 
-    socket.on('data', (data: Buffer) => {
+    socket.on('data', (data: Uint8Array) => {
       hasReceivedData = true;
       banner += data.toString();
 
