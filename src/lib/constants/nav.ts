@@ -1214,6 +1214,20 @@ export const SUB_NAV: Record<string, (NavItem | NavGroup)[]> = {
           icon: 'http-perf',
           keywords: ['http', 'performance', 'timing', 'dns', 'tcp', 'tls', 'ttfb', 'metrics', 'analyzer'],
         },
+        {
+          href: makePath('/diagnostics/http/compression'),
+          label: 'HTTP Compression Check',
+          description: 'Test gzip, brotli, and deflate compression support and measure size differences',
+          icon: 'archive',
+          keywords: ['http', 'compression', 'gzip', 'brotli', 'deflate', 'size', 'reduction', 'performance'],
+        },
+        {
+          href: makePath('/diagnostics/http/cookie-security'),
+          label: 'Cookie Security Inspector',
+          description: 'Inspect Set-Cookie headers for Secure, HttpOnly, SameSite, and other security attributes',
+          icon: 'cookie',
+          keywords: ['http', 'cookie', 'security', 'secure', 'httponly', 'samesite', 'csrf', 'xss', 'attributes'],
+        },
       ],
     },
     {

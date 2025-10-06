@@ -263,6 +263,204 @@ function analyzeSecurityHeaders(headers: Headers): {
   return { headers: securityHeaders, analysis };
 }
 
+function parseCookie(cookieHeader: string): {
+  name: string;
+  value: string;
+  domain?: string;
+  path?: string;
+  expires?: string;
+  maxAge?: number;
+  secure?: boolean;
+  httpOnly?: boolean;
+  sameSite?: string;
+} {
+  const parts = cookieHeader.split(';').map((part) => part.trim());
+  const [nameValue] = parts;
+  const [name, value] = nameValue.split('=', 2);
+
+  const cookie = {
+    name: name?.trim() || '',
+    value: value?.trim() || '',
+  };
+
+  const attributes: any = {};
+
+  for (let i = 1; i < parts.length; i++) {
+    const part = parts[i];
+    const [attrName, attrValue] = part.split('=', 2);
+    const attr = attrName.toLowerCase().trim();
+
+    switch (attr) {
+      case 'domain':
+        attributes.domain = attrValue?.trim();
+        break;
+      case 'path':
+        attributes.path = attrValue?.trim();
+        break;
+      case 'expires':
+        attributes.expires = attrValue?.trim();
+        break;
+      case 'max-age':
+        attributes.maxAge = parseInt(attrValue?.trim() || '0');
+        break;
+      case 'secure':
+        attributes.secure = true;
+        break;
+      case 'httponly':
+        attributes.httpOnly = true;
+        break;
+      case 'samesite':
+        attributes.sameSite = attrValue?.trim() || 'None';
+        break;
+    }
+  }
+
+  return { ...cookie, ...attributes };
+}
+
+function analyzeCookieSecurity(cookie: any): any {
+  const issues = [];
+  let score = 100;
+  let securityLevel = 'secure';
+
+  // Check cookie name for sensitive patterns
+  const sensitiveName = /session|auth|token|login|csrf|jwt|api[-_]?key|sid|ssid/i.test(cookie.name);
+  const analyticsCookie = /_ga|_gid|_utm|analytics|tracking|fbp|fbc|cfm|optimizely/i.test(cookie.name);
+
+  // Check Secure flag
+  if (!cookie.secure) {
+    issues.push('Missing Secure flag - cookie can be sent over unencrypted connections');
+    score -= 30;
+    securityLevel = 'error';
+  }
+
+  // Check HttpOnly flag (more important for auth cookies)
+  if (!cookie.httpOnly) {
+    if (sensitiveName) {
+      issues.push('Missing HttpOnly on sensitive cookie - vulnerable to XSS attacks');
+      score -= 25;
+      securityLevel = 'error';
+    } else if (!analyticsCookie) {
+      issues.push('Missing HttpOnly flag - cookie accessible via JavaScript');
+      score -= 10;
+      if (securityLevel === 'secure') securityLevel = 'warning';
+    }
+    // Analytics cookies legitimately need JavaScript access
+  }
+
+  // Check SameSite attribute
+  const sameSite = cookie.sameSite?.toLowerCase();
+  if (!sameSite || sameSite === 'none') {
+    if (sensitiveName) {
+      issues.push('Missing or weak SameSite on sensitive cookie - vulnerable to CSRF');
+      score -= 25;
+      securityLevel = 'error';
+    } else {
+      issues.push('Missing or weak SameSite attribute - potential CSRF risk');
+      score -= 15;
+      if (securityLevel === 'secure') securityLevel = 'warning';
+    }
+  } else if (sameSite === 'lax') {
+    if (sensitiveName) {
+      issues.push('SameSite=Lax on sensitive cookie - consider Strict for better protection');
+      score -= 10;
+      if (securityLevel === 'secure') securityLevel = 'warning';
+    } else {
+      score -= 5; // Minor deduction for non-sensitive cookies
+    }
+  }
+
+  // Check for overly broad domain (less critical for analytics)
+  if (cookie.domain && cookie.domain.startsWith('.')) {
+    if (sensitiveName) {
+      issues.push('Wildcard domain on sensitive cookie - may expose to subdomains');
+      score -= 10;
+      if (securityLevel === 'secure') securityLevel = 'warning';
+    } else if (!analyticsCookie) {
+      issues.push('Wildcard domain may expose cookie to subdomains unnecessarily');
+      score -= 5;
+    }
+    // Analytics cookies often need wildcard domains
+  }
+
+  // Check for missing expiration
+  if (!cookie.expires && !cookie.maxAge) {
+    if (sensitiveName) {
+      // Session cookies can be good for auth
+      issues.push('Session cookie - will be cleared when browser closes');
+    } else {
+      issues.push('No expiration set - cookie will persist as session cookie');
+      score -= 3;
+    }
+  }
+
+  return {
+    ...cookie,
+    score: Math.max(0, score),
+    securityLevel,
+    issues: issues.length > 0 ? issues : undefined,
+  };
+}
+
+function generateCookieRecommendations(cookies: any[]): any[] {
+  const recommendations = [];
+  const hasInsecure = cookies.some((c) => !c.secure);
+  const hasNoHttpOnly = cookies.some((c) => !c.httpOnly);
+  const hasWeakSameSite = cookies.some((c) => !c.sameSite || ['none', 'lax'].includes(c.sameSite?.toLowerCase()));
+
+  if (hasInsecure) {
+    recommendations.push({
+      title: 'Add Secure Flag',
+      description: 'Always set the Secure flag for cookies to prevent transmission over unencrypted connections.',
+      example: 'Set-Cookie: sessionid=abc123; Secure; HttpOnly; SameSite=Strict',
+    });
+  }
+
+  if (hasNoHttpOnly) {
+    recommendations.push({
+      title: 'Add HttpOnly Flag',
+      description: 'Set HttpOnly to prevent client-side scripts from accessing sensitive cookies.',
+      example: 'Set-Cookie: token=xyz789; Secure; HttpOnly; SameSite=Strict',
+    });
+  }
+
+  if (hasWeakSameSite) {
+    recommendations.push({
+      title: 'Strengthen SameSite Policy',
+      description:
+        'Use SameSite=Strict for sensitive cookies to prevent CSRF attacks. Use Lax for less sensitive cookies that need cross-site functionality.',
+      example: 'Set-Cookie: auth=token123; Secure; HttpOnly; SameSite=Strict',
+    });
+  }
+
+  if (cookies.length === 0) {
+    recommendations.push({
+      title: 'No Cookies Detected',
+      description: 'This server does not set any cookies, which may be intentional for stateless applications.',
+    });
+  }
+
+  return recommendations;
+}
+
+function generateSecuritySummary(score: number | null, cookieCount: number): string {
+  if (cookieCount === 0) {
+    return 'No cookies detected in response headers. This may be intentional for stateless applications.';
+  }
+
+  if (score === null || score >= 90) {
+    return 'Excellent cookie security! All security best practices are followed.';
+  } else if (score >= 80) {
+    return 'Good cookie security with minor improvements possible.';
+  } else if (score >= 70) {
+    return 'Moderate cookie security - some important flags may be missing.';
+  } else if (score >= 60) {
+    return 'Poor cookie security - multiple security issues detected.';
+  } else {
+    return 'Critical cookie security issues - immediate attention required.';
+  }
+}
+
 export const POST: RequestHandler = async ({ request }) => {
   try {
     const {
@@ -424,6 +622,181 @@ export const POST: RequestHandler = async ({ request }) => {
             httpVersion: 'unknown', // Not easily accessible in Node.js fetch
             connectionReused: 'unknown',
           },
+        });
+      }
+
+      case 'compression': {
+        const compressionEncodings = ['gzip', 'br', 'deflate'];
+        const results = [];
+
+        // Get uncompressed version first
+        const startTime = performance.now();
+        const { response: uncompressedResponse, timings: uncompressedTimings } = await performHTTPRequest(
+          url,
+          'GET',
+          { 'Accept-Encoding': 'identity' },
+          true,
+          maxRedirects,
+          timeout,
+        );
+
+        const uncompressedBody = await uncompressedResponse.text();
+        const uncompressedSize = new TextEncoder().encode(uncompressedBody).length;
+
+        // Test each compression method
+        for (const encoding of compressionEncodings) {
+          try {
+            const testStartTime = performance.now();
+            const { response: compressedResponse } = await performHTTPRequest(
+              url,
+              'GET',
+              { 'Accept-Encoding': encoding },
+              true,
+              maxRedirects,
+              timeout,
+            );
+            const testEndTime = performance.now();
+
+            const actualEncoding = compressedResponse.headers.get('content-encoding');
+            const contentLength = compressedResponse.headers.get('content-length');
+
+            const supported = actualEncoding?.includes(encoding) || false;
+            let compressedSize = uncompressedSize;
+
+            if (supported && contentLength) {
+              compressedSize = parseInt(contentLength);
+            } else if (supported) {
+              // If no content-length, get the actual body size
+              const compressedBody = await compressedResponse.text();
+              compressedSize = new TextEncoder().encode(compressedBody).length;
+            }
+
+            const ratio = uncompressedSize > 0 ? ((uncompressedSize - compressedSize) / uncompressedSize) * 100 : 0;
+
+            results.push({
+              encoding,
+              supported,
+              compressedSize,
+              ratio,
+              responseTime: Math.round(testEndTime - testStartTime),
+              actualEncoding: actualEncoding || 'none',
+            });
+          } catch (err) {
+            results.push({
+              encoding,
+              supported: false,
+              compressedSize: uncompressedSize,
+              ratio: 0,
+              responseTime: 0,
+              error: (err as Error).message,
+            });
+          }
+        }
+
+        // Find best compression
+        const supportedResults = results.filter((r) => r.supported && r.ratio > 0);
+        const bestCompression =
+          supportedResults.length > 0
+            ? supportedResults.reduce((best, current) => (current.ratio > best.ratio ? current : best))
+            : { encoding: 'none', ratio: 0 };
+
+        // Check what the server naturally uses
+        const { response: naturalResponse } = await performHTTPRequest(url, 'GET', {}, true, maxRedirects, timeout);
+        const serverEncoding = naturalResponse.headers.get('content-encoding');
+
+        const responseHeaders: Record<string, string> = {};
+        naturalResponse.headers.forEach((value, key) => {
+          responseHeaders[key.toLowerCase()] = value;
+        });
+
+        const totalTime = performance.now() - startTime;
+
+        return json({
+          url: naturalResponse.url,
+          uncompressed: {
+            size: uncompressedSize,
+          },
+          serverCompression: {
+            enabled: !!serverEncoding,
+            encoding: serverEncoding || 'none',
+          },
+          compressionResults: results,
+          bestCompression,
+          headers: responseHeaders,
+          timings: {
+            ...uncompressedTimings,
+            total: Math.round(totalTime),
+          },
+        });
+      }
+
+      case 'cookie-security': {
+        const { response, timings } = await performHTTPRequest(url, method, customHeaders, true, maxRedirects, timeout);
+
+        // Parse all Set-Cookie headers
+        const setCookieHeaders: string[] = [];
+        response.headers.forEach((value, key) => {
+          if (key.toLowerCase() === 'set-cookie') {
+            // Handle multiple Set-Cookie headers (some servers send multiple with same name)
+            if (Array.isArray(value)) {
+              setCookieHeaders.push(...value);
+            } else {
+              setCookieHeaders.push(value);
+            }
+          }
+        });
+
+        const cookies = [];
+        let totalSecurityScore = 0;
+        let secureCookies = 0;
+        let httpOnlyCookies = 0;
+
+        const seenCookies = new Set<string>();
+
+        for (let i = 0; i < setCookieHeaders.length; i++) {
+          const cookieHeader = setCookieHeaders[i];
+          const cookie = parseCookie(cookieHeader);
+
+          // Skip empty cookie names or deletion cookies
+          if (
+            !cookie.name ||
+            (cookie.expires && new Date(cookie.expires).getTime() < Date.now()) ||
+            (cookie.maxAge !== undefined && cookie.maxAge <= 0)
+          ) {
+            continue;
+          }
+
+          // Skip duplicate cookie names (keep only the first/latest)
+          const cookieKey = `${cookie.name}_${cookie.domain || ''}_${cookie.path || '/'}`;
+          if (seenCookies.has(cookieKey)) {
+            continue;
+          }
+          seenCookies.add(cookieKey);
+
+          const analysis = analyzeCookieSecurity(cookie);
+          // Add unique identifier to prevent key conflicts
+          analysis.id = `${cookie.name}_${i}`;
+          cookies.push(analysis);
+          totalSecurityScore += analysis.score;
+          if (analysis.secure) secureCookies++;
+          if (analysis.httpOnly) httpOnlyCookies++;
+        }
+
+        const averageScore = cookies.length > 0 ? Math.round(totalSecurityScore / cookies.length) : null;
+        const recommendations = generateCookieRecommendations(cookies);
+        const summary = generateSecuritySummary(averageScore, cookies.length);
+
+        return json({
+          url: response.url,
+          status: response.status,
+          totalCookies: cookies.length,
+          secureCookies,
+          httpOnlyCookies,
+          securityScore: averageScore,
+          summary,
+          cookies,
+          recommendations,
+          timings,
         });
       }
 

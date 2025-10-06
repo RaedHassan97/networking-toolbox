@@ -25,7 +25,11 @@
    * @returns The SVG content string or undefined if not found
    */
   function getSvgContent(iconName: string): string | undefined {
-    return iconMap[iconName];
+    const icon = iconMap[iconName];
+    if (!icon) {
+      console.warn(`Icon "${iconName}" not found. Using default icon.`);
+    }
+    return icon;
   }
 
   // Get the SVG content for the current icon (reactive to name changes)
