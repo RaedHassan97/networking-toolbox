@@ -1271,6 +1271,13 @@ export const SUB_NAV: Record<string, (NavItem | NavGroup)[]> = {
           icon: 'tls-cipher-presets',
           keywords: ['tls', 'cipher', 'presets', 'modern', 'intermediate', 'legacy', 'security', 'suites', 'probe'],
         },
+        {
+          href: makePath('/diagnostics/tls/banner'),
+          label: 'Service Banner Grabber',
+          description: 'Retrieve service banners from SSH, SMTP, HTTP, FTP, and other network services',
+          icon: 'terminal',
+          keywords: ['banner', 'service', 'ssh', 'smtp', 'ftp', 'http', 'telnet', 'fingerprinting', 'reconnaissance'],
+        },
       ],
     },
     {
@@ -1903,10 +1910,10 @@ function extractAllNavItems(navStructure: (NavItem | NavGroup)[]): NavItem[] {
 
   for (const item of navStructure) {
     if ('items' in item) {
-      // It's a NavGroup (might have href too, but we only want its items)
-      items.push(...item.items);
+      // It's a NavGroup - recursively extract items from its children
+      items.push(...extractAllNavItems(item.items));
     } else if ('href' in item && 'label' in item) {
-      // It's a NavItem (has href and label)
+      // It's a NavItem (has href and label, but no items)
       items.push(item as NavItem);
     }
   }

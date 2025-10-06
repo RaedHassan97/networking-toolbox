@@ -1,11 +1,13 @@
 <script lang="ts">
   import { TOP_NAV, aboutPages, SUB_NAV, STANDALONE_PAGES, type NavItem, type NavGroup } from '$lib/constants/nav';
   import { resolve } from '$app/paths';
+  import Icon from '$lib/components/global/Icon.svelte';
 
   interface TreeNode {
     label: string;
     href: string | null;
     description?: string;
+    icon?: string;
     children: TreeNode[];
   }
 
@@ -13,6 +15,7 @@
     label: 'label' in item ? item.label : item.title,
     href: 'href' in item ? item.href : null,
     description: item.description,
+    icon: 'icon' in item ? item.icon : undefined,
     children: [],
   });
 
@@ -64,6 +67,7 @@
   {@const title = node.description || node.label}
   {@const ariaLabel = node.description ? `${node.label}: ${node.description}` : node.label}
   {#if node.href}
+    {#if node.icon} <Icon name={node.icon} size="xs" /> {/if}
     <a href={node.href} {title} aria-label={ariaLabel}>{node.label}</a>
   {:else}
     <span class={node.children.length ? 'section-title' : 'group-title'} {title} aria-label={ariaLabel}>
@@ -154,6 +158,15 @@
 
         li {
           margin: var(--spacing-xs) 0;
+          padding-left: var(--spacing-sm);
+          :global(.icon) {
+            opacity: 0.75;
+            transition: all ease-in-out 0.2s;
+          }
+          &:hover > :global(.icon) {
+            opacity: 1;
+            transform: scale(1.1);
+          }
         }
       }
     }
@@ -161,7 +174,7 @@
     a {
       color: var(--color-link);
       text-decoration: none;
-      padding: 0 var(--spacing-sm);
+      // padding: 0 var(--spacing-sm);
       display: inline-block;
       transition: all 0.2s;
       border-radius: var(--radius-sm);
