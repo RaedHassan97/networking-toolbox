@@ -306,6 +306,7 @@
           </div>
           <div class="card-content">
             {#if results.banner}
+              <!-- eslint-disable-next-line svelte/no-at-html-tags -->
               <pre class="banner-content">{@html formatBanner(results.banner)}</pre>
             {:else}
               <div class="no-banner">

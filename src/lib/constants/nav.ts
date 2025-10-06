@@ -1150,6 +1150,25 @@ export const SUB_NAV: Record<string, (NavItem | NavGroup)[]> = {
           keywords: ['dnssec', 'ad', 'flag', 'authenticated', 'data', 'doh', 'validation', 'security', 'dns'],
         },
         {
+          href: makePath('/diagnostics/dns/dnssec-validation-chain'),
+          label: 'DNSSEC Validation Chain',
+          description: 'Validate full DNSSEC chain from root to domain with DS/DNSKEY matching and RRSIG verification',
+          icon: 'dnssec-chain',
+          keywords: [
+            'dnssec',
+            'validation',
+            'chain',
+            'ds',
+            'dnskey',
+            'rrsig',
+            'trust',
+            'security',
+            'dns',
+            'root',
+            'authenticated',
+          ],
+        },
+        {
           href: makePath('/diagnostics/dns/soa-serial'),
           label: 'SOA Serial Analyzer',
           description:

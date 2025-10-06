@@ -596,7 +596,7 @@ async function grabServiceBanner(host: string, port: number, timeout: number = 5
       }
 
       // Set a shorter timer for banner services
-      const bannerTimeout = setTimeout(() => {
+      setTimeout(() => {
         if (!completed) {
           completed = true;
           clearTimeout(hardTimeout);
@@ -619,7 +619,7 @@ async function grabServiceBanner(host: string, port: number, timeout: number = 5
       }, 2000); // 2 second max for banner collection
     });
 
-    socket.on('data', (data) => {
+    socket.on('data', (data: Buffer) => {
       hasReceivedData = true;
       banner += data.toString();
 
@@ -672,7 +672,7 @@ async function grabServiceBanner(host: string, port: number, timeout: number = 5
       }
     });
 
-    socket.on('error', (err) => {
+    socket.on('error', (err: Error) => {
       if (!completed) {
         completed = true;
         clearTimeout(hardTimeout);
