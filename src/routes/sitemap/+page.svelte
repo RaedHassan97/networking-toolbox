@@ -67,7 +67,9 @@
   {@const title = node.description || node.label}
   {@const ariaLabel = node.description ? `${node.label}: ${node.description}` : node.label}
   {#if node.href}
-    {#if node.icon} <Icon name={node.icon} size="xs" /> {/if}
+    {#if node.icon}
+      <Icon name={node.icon} size="xs" />
+    {/if}
     <a href={node.href} {title} aria-label={ariaLabel}>{node.label}</a>
   {:else}
     <span class={node.children.length ? 'section-title' : 'group-title'} {title} aria-label={ariaLabel}>

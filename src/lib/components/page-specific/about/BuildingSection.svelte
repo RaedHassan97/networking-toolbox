@@ -2,7 +2,7 @@
 </script>
 
 <section id="building">
-  <h2>Building from Source</h2>
+  <h2>Building</h2>
   <h3>Prerequisites</h3>
   <p>
     Make sure you have <a href="https://nodejs.org/en/download/" target="_blank" rel="noopener noreferrer">Node.js</a>
@@ -28,7 +28,7 @@
     <code>npm run tsc</code>
     <code>npm run lint</code>
   </div>
-
+  <!-- 
   <h3>Deploying</h3>
   <ul>
     <li>
@@ -46,7 +46,7 @@
       Build the Docker image, with <code>docker build -t networking-toolbox .</code>
       then run <code>docker run -p 8080:8080 networking-toolbox</code>
     </li>
-  </ul>
+  </ul> -->
 
   <h3>Contributing</h3>
   <p>

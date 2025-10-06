@@ -57,7 +57,8 @@
     if (!trimmedHost) return false;
     if (port === null || port < 1 || port > 65535) return false;
     // Basic hostname/IP validation
-    const hostPattern = /^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$|^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$|^\[?[a-fA-F0-9:]+\]?$/;
+    const hostPattern =
+      /^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$|^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$|^\[?[a-fA-F0-9:]+\]?$/;
     return hostPattern.test(trimmedHost);
   });
 
@@ -104,7 +105,7 @@
     }
   }
 
-  function loadExample(example: typeof examples[0], index: number) {
+  function loadExample(example: (typeof examples)[0], index: number) {
     host = example.host;
     port = example.port;
     service = example.service;
@@ -118,16 +119,22 @@
 
   function getProtocolIcon(protocol: string): string {
     switch (protocol?.toLowerCase()) {
-      case 'ssh': return 'terminal';
+      case 'ssh':
+        return 'terminal';
       case 'http':
-      case 'https': return 'globe';
+      case 'https':
+        return 'globe';
       case 'smtp':
       case 'smtps':
-      case 'submission': return 'mail';
-      case 'ftp': return 'folder';
+      case 'submission':
+        return 'mail';
+      case 'ftp':
+        return 'folder';
       case 'tls':
-      case 'ssl': return 'lock';
-      default: return 'server';
+      case 'ssl':
+        return 'lock';
+      default:
+        return 'server';
     }
   }
 
@@ -179,12 +186,7 @@
       <div class="form-row">
         <div class="form-group">
           <label for="service">Service Type</label>
-          <select
-            id="service"
-            bind:value={service}
-            disabled={loading}
-            onchange={() => clearExampleSelection()}
-          >
+          <select id="service" bind:value={service} disabled={loading} onchange={() => clearExampleSelection()}>
             {#each Object.entries(services) as [key, svc] (key)}
               <option value={key}>{svc.description} {svc.port ? `(${svc.port})` : ''}</option>
             {/each}
