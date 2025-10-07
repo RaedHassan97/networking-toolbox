@@ -303,9 +303,9 @@ export const POST: RequestHandler = async ({ request }) => {
     if (!hasDigCommand) {
       response.limitedMode = true;
       response.limitedModeReason =
-        'Sorry, this feature isn\'t fully available in this environment. '
-        +'AXFR testing requires system tools are not supported in serverless deployments. '
-        + 'Full functionality available on self-hosted instances.';
+        "Sorry, this feature isn't fully available in this environment. " +
+        'AXFR testing requires system tools are not supported in serverless deployments. ' +
+        'Full functionality available on self-hosted instances.';
     }
 
     return json(response);
