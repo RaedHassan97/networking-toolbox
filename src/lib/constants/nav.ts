@@ -1169,6 +1169,26 @@ export const SUB_NAV: Record<string, (NavItem | NavGroup)[]> = {
           ],
         },
         {
+          href: makePath('/diagnostics/dns/blacklist-checker'),
+          label: 'DNS Blacklist Checker',
+          description: 'Check if IP or domain is listed on spam blacklists for email deliverability troubleshooting',
+          icon: 'blacklist',
+          keywords: [
+            'dnsbl',
+            'rbl',
+            'blacklist',
+            'spam',
+            'spamhaus',
+            'sorbs',
+            'email',
+            'deliverability',
+            'reputation',
+            'blocklist',
+            'listing',
+            'delisting',
+          ],
+        },
+        {
           href: makePath('/diagnostics/dns/soa-serial'),
           label: 'SOA Serial Analyzer',
           description:
