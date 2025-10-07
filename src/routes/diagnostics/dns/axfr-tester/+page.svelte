@@ -40,10 +40,15 @@
   });
 
   const examples = [
-    { domain: 'zonetransfer.me', description: 'Intentionally vulnerable test domain' },
-    { domain: 'google.com', description: 'Secure major site' },
-    { domain: 'cloudflare.com', description: 'Secure DNS provider' },
-    { domain: 'github.com', description: 'Secure tech company' },
+    { domain: 'bbc.co.uk', description: '' },
+    { domain: 'zonetransfer.me', description: '' },
+    { domain: 'networkingtoolbox.net', description: '' },
+    { domain: 'amazon.com', description: '' },
+    { domain: 'wikipedia.org', description: '' },
+    { domain: 'github.com', description: '' },
+    { domain: 'gov.uk', description: '' },
+    { domain: 'proton.me', description: '' },
+    { domain: 'loveholidays.com', description: '' },
   ];
 
   async function testAXFR() {
@@ -147,7 +152,13 @@
   </div>
 
   <!-- Input Form -->
-  <form class="inline-form" onsubmit={(e) => { e.preventDefault(); testAXFR(); }}>
+  <form
+    class="inline-form"
+    onsubmit={(e) => {
+      e.preventDefault();
+      testAXFR();
+    }}
+  >
     <div class="form-group flex-grow">
       <label for="domain">Domain Name</label>
       <input
@@ -156,7 +167,9 @@
         bind:value={domain}
         placeholder="example.com"
         disabled={loading}
-        oninput={() => { selectedExampleIndex = null; }}
+        oninput={() => {
+          selectedExampleIndex = null;
+        }}
         aria-invalid={!isInputValid}
       />
     </div>
@@ -192,8 +205,8 @@
         <div>
           <strong>Critical Security Vulnerability Detected!</strong>
           <p>
-            {results.summary.vulnerable} nameserver{results.summary.vulnerable > 1 ? 's' : ''} allowed
-            unrestricted zone transfer. Your entire DNS zone is exposed to anyone.
+            {results.summary.vulnerable} nameserver{results.summary.vulnerable > 1 ? 's' : ''} allowed unrestricted zone
+            transfer. Your entire DNS zone is exposed to anyone.
             <strong>Immediate action required!</strong>
           </p>
         </div>
@@ -259,10 +272,10 @@
                 </div>
               </div>
               <div class="nameserver-status">
+                <span class="response-time">{ns.responseTime}ms</span>
                 <span class="status-badge status-{getStatusColor(ns)}">
                   {getStatusText(ns)}
                 </span>
-                <span class="response-time">{ns.responseTime}ms</span>
               </div>
             </div>
 
@@ -280,8 +293,7 @@
                     onclick={() => toggleRecords(ns.nameserver)}
                   >
                     <Icon name="chevron-right" size="xs" />
-                    {expandedRecords.has(ns.nameserver) ? 'Hide' : 'Show'} exposed records
-                    ({ns.records.length} of {ns.recordCount})
+                    {expandedRecords.has(ns.nameserver) ? 'Hide' : 'Show'} exposed records ({ns.records.length} of {ns.recordCount})
                   </button>
 
                   {#if expandedRecords.has(ns.nameserver)}
@@ -315,15 +327,17 @@
     <!-- Test Metadata -->
     <div class="test-metadata">
       <p>
-        <strong>Domain:</strong> {results.domain} •
-        <strong>Tested:</strong> {new Date(results.timestamp).toLocaleString()}
+        <strong>Domain:</strong>
+        {results.domain} •
+        <strong>Tested:</strong>
+        {new Date(results.timestamp).toLocaleString()}
       </p>
     </div>
   {/if}
 </div>
 
 <!-- Educational Content -->
- <section class="card educational-part">
+<section class="card educational-part">
   <div class="card info-card">
     <h2>{axfrContent.sections.whatIsAXFR.title}</h2>
     <p>{axfrContent.sections.whatIsAXFR.content}</p>
@@ -354,13 +368,21 @@
       {#each axfrContent.sections.interpretation.statuses as status (status.status)}
         <div class="status-explanation status-{status.color}">
           <div class="status-header">
-            <Icon name={status.status === 'Vulnerable' ? 'alert-circle' : status.status === 'Secure' ? 'shield-check' : 'alert-triangle'} size="sm" />
+            <Icon
+              name={status.status === 'Vulnerable'
+                ? 'alert-circle'
+                : status.status === 'Secure'
+                  ? 'shield-check'
+                  : 'alert-triangle'}
+              size="sm"
+            />
             <h4>{status.status}: {status.meaning}</h4>
           </div>
           <p>{status.description}</p>
           <div class="status-action">
             <Icon name="arrow-right" size="xs" />
-            <strong>Action:</strong> {status.action}
+            <strong>Action:</strong>
+            {status.action}
           </div>
         </div>
       {/each}
@@ -464,6 +486,74 @@
     }
   }
 
+  .alert {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    border-left: 4px solid;
+    margin: var(--spacing-lg) 0;
+
+    :global(.icon) {
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    div {
+      flex: 1;
+      min-width: 0;
+    }
+
+    strong {
+      display: block;
+      font-size: var(--font-size-md);
+      margin-bottom: var(--spacing-xs);
+    }
+
+    p {
+      margin: 0;
+      font-size: var(--font-size-sm);
+      line-height: 1.5;
+    }
+
+    &.alert-error {
+      background: color-mix(in srgb, var(--color-error) 10%, var(--bg-primary));
+      border-left-color: var(--color-error);
+      color: var(--color-error);
+
+      :global(.icon) {
+        color: var(--color-error);
+      }
+
+      strong {
+        color: var(--color-error);
+      }
+
+      p {
+        color: var(--text-primary);
+      }
+    }
+
+    &.alert-success {
+      background: color-mix(in srgb, var(--color-success) 10%, var(--bg-primary));
+      border-left-color: var(--color-success);
+      color: var(--color-success);
+
+      :global(.icon) {
+        color: var(--color-success);
+      }
+
+      strong {
+        color: var(--color-success);
+      }
+
+      p {
+        color: var(--text-primary);
+      }
+    }
+  }
+
   .stats-summary {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -523,24 +613,29 @@
   }
 
   .nameserver-card {
-    background: var(--bg-secondary);
+    background: var(--bg-tertiary);
     border-radius: var(--radius-md);
     padding: var(--spacing-md);
-    border-left: 4px solid var(--border-primary);
 
     &.status-error {
-      border-left-color: var(--color-error);
-      background: color-mix(in srgb, var(--color-error) 6%, var(--bg-secondary));
+      .nameserver-info :global(.icon) {
+        color: var(--color-error);
+      }
+      // background: color-mix(in srgb, var(--color-error) 6%, var(--bg-secondary));
     }
 
     &.status-success {
-      border-left-color: var(--color-success);
-      background: color-mix(in srgb, var(--color-success) 6%, var(--bg-secondary));
+      .nameserver-info :global(.icon) {
+        color: var(--color-success);
+      }
+      // background: color-mix(in srgb, var(--color-success) 6%, var(--bg-secondary));
     }
 
     &.status-warning {
-      border-left-color: var(--color-warning);
-      background: color-mix(in srgb, var(--color-warning) 6%, var(--bg-secondary));
+      .nameserver-info :global(.icon) {
+        color: var(--color-warning);
+      }
+      // background: color-mix(in srgb, var(--color-warning) 6%, var(--bg-secondary));
     }
 
     .nameserver-header {
@@ -587,12 +682,12 @@
 
           &.status-error {
             background: var(--color-error);
-            color: white;
+            color: var(--bg-primary);
           }
 
           &.status-success {
             background: var(--color-success);
-            color: white;
+            color: var(--bg-primary);
           }
 
           &.status-warning {
@@ -749,7 +844,7 @@
 
         &.severity-high {
           background: var(--color-error);
-          color: white;
+          color: var(--bg-primary);
         }
 
         &.severity-medium {

@@ -82,6 +82,15 @@ describe('AXFR Security Tester API', () => {
       expect(status).toBe(200);
       expect(data.summary.vulnerable).toBe(0);
     });
+
+    it('should handle connection reset as secure', async () => {
+      const { status, data } = await makeRequest('loveholidays.com');
+
+      expect(status).toBe(200);
+      expect(data.summary.vulnerable).toBe(0);
+      // Connection reset should be counted as secure, not error
+      expect(data.summary.secure).toBeGreaterThan(0);
+    });
   });
 
   describe('Vulnerable Test Domain', () => {

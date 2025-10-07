@@ -1,8 +1,11 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { exec } from 'node:child_process';
-import { promisify } from 'node:util';
-import { promises as dns } from 'node:dns';
+// @ts-expect-error - Node.js core modules work at runtime
+import { exec } from 'child_process';
+// @ts-expect-error - Node.js core modules work at runtime
+import { promisify } from 'util';
+// @ts-expect-error - Node.js core modules work at runtime
+import { promises as dns } from 'dns';
 
 const execAsync = promisify(exec);
 
@@ -66,9 +69,7 @@ async function testAXFR(domain: string, nameserver: string, ip: string): Promise
 
     const { stdout, stderr } = await Promise.race([
       execAsync(command, { maxBuffer: 1024 * 1024 * 5 }), // 5MB max
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('AXFR query timeout')), AXFR_TIMEOUT_MS)
-      ),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('AXFR query timeout')), AXFR_TIMEOUT_MS)),
     ]);
 
     const endTime = performance.now();
@@ -76,24 +77,33 @@ async function testAXFR(domain: string, nameserver: string, ip: string): Promise
 
     const output = stdout + stderr;
 
-    // Check for transfer success indicators
-    if (output.includes('Transfer failed') || output.includes('failed')) {
+    // Check for connection reset (SECURE - actively refusing)
+    if (output.includes('connection reset')) {
       return {
         nameserver,
         ip,
         vulnerable: false,
-        error: 'Transfer refused (secure)',
         responseTime,
       };
     }
 
-    // Check for timeout
+    // Check for timeout/connection errors (can't determine security)
     if (output.includes('connection timed out') || output.includes('no servers could be reached')) {
       return {
         nameserver,
         ip,
         vulnerable: false,
         error: 'Connection timeout',
+        responseTime,
+      };
+    }
+
+    // Check for transfer refused (SECURE - proper configuration)
+    if (output.includes('Transfer failed') || output.includes('failed') || output.includes('refused')) {
+      return {
+        nameserver,
+        ip,
+        vulnerable: false,
         responseTime,
       };
     }
@@ -128,17 +138,27 @@ async function testAXFR(domain: string, nameserver: string, ip: string): Promise
       }
     }
 
-    // No records returned - secure
+    // No records returned - secure (transfer properly refused)
     return {
       nameserver,
       ip,
       vulnerable: false,
-      error: 'Transfer refused (secure)',
       responseTime,
     };
   } catch (err: any) {
     const endTime = performance.now();
     const responseTime = Math.round((endTime - startTime) * 100) / 100;
+
+    // Check if error output contains connection reset (SECURE)
+    const errorOutput = (err.stderr || err.stdout || err.message || '').toLowerCase();
+    if (errorOutput.includes('connection reset')) {
+      return {
+        nameserver,
+        ip,
+        vulnerable: false,
+        responseTime,
+      };
+    }
 
     let errorMsg = 'Unknown error';
     if (err.message?.includes('timeout')) {
@@ -224,7 +244,7 @@ export const POST: RequestHandler = async ({ request }) => {
             responseTime: 0,
           };
         }
-      })
+      }),
     );
 
     // Calculate summary

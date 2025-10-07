@@ -38,8 +38,7 @@ However, if AXFR is misconfigured to allow transfers from any source, it becomes
         {
           risk: 'Internal IP Exposure',
           severity: 'Medium',
-          description:
-            'Private IP addresses and internal network topology revealed through zone records.',
+          description: 'Private IP addresses and internal network topology revealed through zone records.',
           impact: 'Helps attackers understand internal network architecture',
         },
       ],
@@ -136,26 +135,22 @@ VALUES (1, 'ALLOW-AXFR-FROM', '192.0.2.1');`,
       practices: [
         {
           practice: 'Restrict Zone Transfers',
-          description:
-            'Only allow AXFR from authorized secondary nameservers. Never allow unrestricted transfers.',
+          description: 'Only allow AXFR from authorized secondary nameservers. Never allow unrestricted transfers.',
           priority: 'Critical',
         },
         {
           practice: 'Use TSIG Authentication',
-          description:
-            'Implement TSIG (Transaction Signature) for authenticated zone transfers between servers.',
+          description: 'Implement TSIG (Transaction Signature) for authenticated zone transfers between servers.',
           priority: 'High',
         },
         {
           practice: 'Regular Security Audits',
-          description:
-            'Periodically test your nameservers for AXFR vulnerabilities using tools like this one.',
+          description: 'Periodically test your nameservers for AXFR vulnerabilities using tools like this one.',
           priority: 'High',
         },
         {
           practice: 'Minimize Public DNS Records',
-          description:
-            "Don't publish internal hostnames or private infrastructure details in public DNS zones.",
+          description: "Don't publish internal hostnames or private infrastructure details in public DNS zones.",
           priority: 'Medium',
         },
         {
