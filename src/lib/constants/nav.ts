@@ -1189,6 +1189,13 @@ export const SUB_NAV: Record<string, (NavItem | NavGroup)[]> = {
           ],
         },
         {
+          href: makePath('/diagnostics/dns/axfr-tester'),
+          label: 'AXFR Security Tester',
+          description: 'Test if DNS zone transfers are improperly exposed - detect critical security vulnerabilities',
+          icon: 'zone-transfer-safe',
+          keywords: ['axfr', 'zone', 'transfer', 'security', 'vulnerability', 'dns', 'leak', 'audit', 'test', 'nameserver'],
+        },
+        {
           href: makePath('/diagnostics/dns/query-performance'),
           label: 'DNS Query Performance',
           description: 'Compare DNS resolver speeds across multiple providers to find the fastest for your location',
