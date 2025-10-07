@@ -79,8 +79,14 @@ describe('AXFR Security Tester API', () => {
 
       expect(status).toBe(200);
       expect(data.summary.vulnerable).toBe(0);
-      // Connection reset should be counted as secure, not error
-      expect(data.summary.secure).toBeGreaterThan(0);
+
+      // In full environment: connection reset counted as secure
+      // In limited mode: all counted as errors with unavailable message
+      if (data.limitedMode) {
+        expect(data.summary.errors).toBeGreaterThan(0);
+      } else {
+        expect(data.summary.secure).toBeGreaterThan(0);
+      }
     });
   });
 

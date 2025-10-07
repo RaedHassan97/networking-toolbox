@@ -36,12 +36,29 @@ interface AXFRResponse {
     errors: number;
   };
   timestamp: string;
+  limitedMode?: boolean;
+  limitedModeReason?: string;
 }
 
 const DOMAIN_PATTERN = /^([a-zA-Z0-9_]([a-zA-Z0-9_-]{0,61}[a-zA-Z0-9_])?\.)+[a-zA-Z]{2,}$/;
 const MAX_DOMAIN_LENGTH = 253;
 const AXFR_TIMEOUT_MS = 10000;
 const MAX_RECORDS_DISPLAY = 50;
+
+let digAvailable: boolean | null = null;
+
+async function checkDigAvailable(): Promise<boolean> {
+  if (digAvailable !== null) return digAvailable;
+
+  try {
+    await execAsync('dig -v', { timeout: 2000 });
+    digAvailable = true;
+    return true;
+  } catch {
+    digAvailable = false;
+    return false;
+  }
+}
 
 function validateDomain(domain: string): boolean {
   if (!domain || domain.length > MAX_DOMAIN_LENGTH) return false;
@@ -60,6 +77,18 @@ async function resolveNameserverIP(nameserver: string): Promise<string> {
       throw new Error(`Failed to resolve nameserver: ${nameserver}`);
     }
   }
+}
+
+async function testAXFRLimitedMode(domain: string, nameserver: string, ip: string): Promise<NameserverResult> {
+  const startTime = performance.now();
+
+  return {
+    nameserver,
+    ip,
+    vulnerable: false,
+    error: 'AXFR testing unavailable in serverless environment',
+    responseTime: Math.round((performance.now() - startTime) * 100) / 100,
+  };
 }
 
 async function testAXFR(domain: string, nameserver: string, ip: string): Promise<NameserverResult> {
@@ -231,12 +260,16 @@ export const POST: RequestHandler = async ({ request }) => {
       nameserversToTest = nameserversToTest.slice(0, 10);
     }
 
+    // Check if dig is available
+    const hasDigCommand = await checkDigAvailable();
+    const testFunction = hasDigCommand ? testAXFR : testAXFRLimitedMode;
+
     // Test AXFR on all nameservers
     const results = await Promise.all(
       nameserversToTest.map(async (ns): Promise<NameserverResult> => {
         try {
           const ip = await resolveNameserverIP(ns);
-          return await testAXFR(trimmedDomain, ns, ip);
+          return await testFunction(trimmedDomain, ns, ip);
         } catch (err: any) {
           return {
             nameserver: ns,
@@ -265,6 +298,15 @@ export const POST: RequestHandler = async ({ request }) => {
       },
       timestamp: new Date().toISOString(),
     };
+
+    // Add limited mode info if dig is not available
+    if (!hasDigCommand) {
+      response.limitedMode = true;
+      response.limitedModeReason =
+        'Sorry, this feature isn\'t fully available in this environment. '
+        +'AXFR testing requires system tools are not supported in serverless deployments. '
+        + 'Full functionality available on self-hosted instances.';
+    }
 
     return json(response);
   } catch (err) {

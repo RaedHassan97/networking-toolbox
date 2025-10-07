@@ -25,6 +25,8 @@
       errors: number;
     };
     timestamp: string;
+    limitedMode?: boolean;
+    limitedModeReason?: string;
   };
 
   let domain = $state('example.com');
@@ -198,6 +200,17 @@
 
   <!-- Results -->
   {#if results}
+    <!-- Limited Mode Warning -->
+    {#if results.limitedMode}
+      <div class="alert alert-warning" role="alert">
+        <Icon name="alert-triangle" size="md" />
+        <div>
+          <strong>Limited Testing Mode</strong>
+          <p>{results.limitedModeReason}</p>
+        </div>
+      </div>
+    {/if}
+
     <!-- Security Warning if Vulnerable -->
     {#if results.summary.vulnerable > 0}
       <div class="alert alert-error" role="alert">
@@ -546,6 +559,24 @@
 
       strong {
         color: var(--color-success);
+      }
+
+      p {
+        color: var(--text-primary);
+      }
+    }
+
+    &.alert-warning {
+      background: color-mix(in srgb, var(--color-warning) 10%, var(--bg-primary));
+      border-left-color: var(--color-warning);
+      color: var(--color-warning);
+
+      :global(.icon) {
+        color: var(--color-warning);
+      }
+
+      strong {
+        color: var(--color-warning);
       }
 
       p {
