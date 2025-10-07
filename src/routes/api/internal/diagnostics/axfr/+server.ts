@@ -7,7 +7,7 @@ import { promisify } from 'util';
 // @ts-expect-error - Node.js core modules work at runtime
 import { promises as dns } from 'dns';
 
-export const config = { runtime: 'nodejs' };
+export const config = { runtime: 'nodejs22.x' };
 
 const execAsync = promisify(exec);
 
