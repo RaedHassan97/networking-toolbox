@@ -31,44 +31,188 @@ interface DNSBLResponse {
   timestamp: string;
 }
 
-// Comprehensive list of major RBLs
-const RBLS = [
+type RBLType = 'ip' | 'domain' | 'both';
+
+interface RBL {
+  zone: string;
+  name: string;
+  description?: string;
+  url?: string;
+  type: RBLType;
+  requiresAuth?: boolean;
+  supportsIPv6?: boolean;
+}
+
+// Comprehensive list of major RBLs with explicit types
+const RBLS: RBL[] = [
   // Spamhaus
-  // { zone: 'zen.spamhaus.org', name: 'Spamhaus ZEN', description: 'Combined blocklist', url: 'https://www.spamhaus.org/lookup/' },
-  // { zone: 'sbl.spamhaus.org', name: 'Spamhaus SBL', description: 'Spam sources', url: 'https://www.spamhaus.org/lookup/' },
-  // { zone: 'xbl.spamhaus.org', name: 'Spamhaus XBL', description: 'Exploits', url: 'https://www.spamhaus.org/lookup/' },
-  // { zone: 'pbl.spamhaus.org', name: 'Spamhaus PBL', description: 'Policy blocklist', url: 'https://www.spamhaus.org/lookup/' },
-  { zone: 'dbl.spamhaus.org', name: 'Spamhaus DBL', description: 'Domain blocklist', url: 'https://www.spamhaus.org/lookup/' },
+  {
+    zone: 'zen.spamhaus.org',
+    name: 'Spamhaus ZEN',
+    description: 'Combined blocklist',
+    url: 'https://www.spamhaus.org/lookup/',
+    type: 'both',
+    supportsIPv6: true,
+  },
+  {
+    zone: 'sbl.spamhaus.org',
+    name: 'Spamhaus SBL',
+    description: 'Spam sources',
+    url: 'https://www.spamhaus.org/lookup/',
+    type: 'ip',
+    supportsIPv6: true,
+  },
+  {
+    zone: 'xbl.spamhaus.org',
+    name: 'Spamhaus XBL',
+    description: 'Exploits',
+    url: 'https://www.spamhaus.org/lookup/',
+    type: 'ip',
+    supportsIPv6: true,
+  },
+  {
+    zone: 'pbl.spamhaus.org',
+    name: 'Spamhaus PBL',
+    description: 'Policy blocklist',
+    url: 'https://www.spamhaus.org/lookup/',
+    type: 'ip',
+    supportsIPv6: true,
+  },
+  {
+    zone: 'dbl.spamhaus.org',
+    name: 'Spamhaus DBL',
+    description: 'Domain blocklist',
+    url: 'https://www.spamhaus.org/lookup/',
+    type: 'domain',
+  },
 
   // SORBS
-  { zone: 'dnsbl.sorbs.net', name: 'SORBS', description: 'Spam sources', url: 'https://www.sorbs.net/lookup.shtml' },
+  {
+    zone: 'dnsbl.sorbs.net',
+    name: 'SORBS',
+    description: 'Spam sources',
+    url: 'https://www.sorbs.net/lookup.shtml',
+    type: 'ip',
+    supportsIPv6: false,
+  },
 
   // SpamCop
-  { zone: 'bl.spamcop.net', name: 'SpamCop', description: 'Spam reports', url: 'https://www.spamcop.net/bl.shtml' },
+  {
+    zone: 'bl.spamcop.net',
+    name: 'SpamCop',
+    description: 'Spam reports',
+    url: 'https://www.spamcop.net/bl.shtml',
+    type: 'ip',
+    supportsIPv6: false,
+  },
 
   // Barracuda
-  { zone: 'b.barracudacentral.org', name: 'Barracuda', description: 'Reputation system', url: 'https://barracudacentral.org/lookups' },
+  {
+    zone: 'b.barracudacentral.org',
+    name: 'Barracuda',
+    description: 'Reputation system',
+    url: 'https://barracudacentral.org/lookups',
+    type: 'ip',
+    requiresAuth: true,
+    supportsIPv6: false,
+  },
 
   // UCEPROTECT
-  { zone: 'dnsbl-1.uceprotect.net', name: 'UCEPROTECT L1', description: 'Single IPs', url: 'https://www.uceprotect.net/en/rblcheck.php' },
-  { zone: 'dnsbl-2.uceprotect.net', name: 'UCEPROTECT L2', description: 'ISP ranges', url: 'https://www.uceprotect.net/en/rblcheck.php' },
-  { zone: 'dnsbl-3.uceprotect.net', name: 'UCEPROTECT L3', description: 'Countries/ASNs', url: 'https://www.uceprotect.net/en/rblcheck.php' },
+  {
+    zone: 'dnsbl-1.uceprotect.net',
+    name: 'UCEPROTECT L1',
+    description: 'Single IPs',
+    url: 'https://www.uceprotect.net/en/rblcheck.php',
+    type: 'ip',
+    supportsIPv6: false,
+  },
+  {
+    zone: 'dnsbl-2.uceprotect.net',
+    name: 'UCEPROTECT L2',
+    description: 'ISP ranges',
+    url: 'https://www.uceprotect.net/en/rblcheck.php',
+    type: 'ip',
+    supportsIPv6: false,
+  },
+  {
+    zone: 'dnsbl-3.uceprotect.net',
+    name: 'UCEPROTECT L3',
+    description: 'Countries/ASNs',
+    url: 'https://www.uceprotect.net/en/rblcheck.php',
+    type: 'ip',
+    supportsIPv6: false,
+  },
 
   // PSBL
-  { zone: 'psbl.surriel.com', name: 'PSBL', description: 'Passive spam block', url: 'https://psbl.org/' },
+  {
+    zone: 'psbl.surriel.com',
+    name: 'PSBL',
+    description: 'Passive spam block',
+    url: 'https://psbl.org/',
+    type: 'ip',
+    supportsIPv6: false,
+  },
 
   // Others
-  // { zone: 'cbl.abuseat.org', name: 'CBL', description: 'Composite blocking', url: 'https://www.abuseat.org/lookup.cgi' },
-  { zone: 'dnsbl.dronebl.org', name: 'DroneBL', description: 'Drones/zombies', url: 'https://dronebl.org/lookup' },
-  { zone: 'spam.dnsbl.sorbs.net', name: 'SORBS Spam', description: 'Verified spam', url: 'https://www.sorbs.net/lookup.shtml' },
-  { zone: 'dul.dnsbl.sorbs.net', name: 'SORBS DUL', description: 'Dynamic IPs', url: 'https://www.sorbs.net/lookup.shtml' },
-
-  { zone: 'bl.blocklist.de', name: 'Blocklist.de', description: 'Blocklist.de (abusive mail servers)', url: 'https://www.blocklist.de/en/index.html' },
-  { zone: 'bl.mailspike.net', name: 'Mailspike', description: 'Mailspike abuse list', url: 'https://mailspike.org/' },
-  { zone: 'all.spamrats.com', name: 'SpamRats', description: 'SpamRats RBL', url: 'https://www.spamrats.com/' },
-  { zone: 'multi.surbl.org', name: 'SURBL Multi', description: 'URI/domain lists (phishing/malware/abuse)', url: 'https://www.surbl.org/' },
-  { zone: 'dnsrbl.org', name: 'DNSRBL', description: 'DNS Real-time Blackhole List', url: 'https://dnsrbl.org/' },
+  {
+    zone: 'dnsbl.dronebl.org',
+    name: 'DroneBL',
+    description: 'Drones/zombies',
+    url: 'https://dronebl.org/lookup',
+    type: 'ip',
+    supportsIPv6: true,
+  },
+  {
+    zone: 'spam.dnsbl.sorbs.net',
+    name: 'SORBS Spam',
+    description: 'Verified spam',
+    url: 'https://www.sorbs.net/lookup.shtml',
+    type: 'ip',
+    supportsIPv6: false,
+  },
+  {
+    zone: 'dul.dnsbl.sorbs.net',
+    name: 'SORBS DUL',
+    description: 'Dynamic IPs',
+    url: 'https://www.sorbs.net/lookup.shtml',
+    type: 'ip',
+    supportsIPv6: false,
+  },
+  {
+    zone: 'bl.blocklist.de',
+    name: 'Blocklist.de',
+    description: 'Abusive mail servers',
+    url: 'https://www.blocklist.de/en/index.html',
+    type: 'ip',
+    supportsIPv6: false,
+  },
+  {
+    zone: 'bl.mailspike.net',
+    name: 'Mailspike',
+    description: 'Mailspike abuse list',
+    url: 'https://mailspike.org/',
+    type: 'ip',
+    supportsIPv6: false,
+  },
+  {
+    zone: 'all.spamrats.com',
+    name: 'SpamRats',
+    description: 'SpamRats RBL',
+    url: 'https://www.spamrats.com/',
+    type: 'ip',
+    supportsIPv6: false,
+  },
+  {
+    zone: 'multi.surbl.org',
+    name: 'SURBL Multi',
+    description: 'URI/domain lists',
+    url: 'https://www.surbl.org/',
+    type: 'domain',
+  },
 ];
+
+const DNS_TIMEOUT_MS = 1000;
+const CONCURRENCY_LIMIT = 8;
 
 function isIPv4(str: string): boolean {
   return /^(\d{1,3}\.){3}\d{1,3}$/.test(str);
@@ -83,34 +227,80 @@ function reverseIPv4(ip: string): string {
 }
 
 function reverseIPv6(ip: string): string {
-  // Expand IPv6 to full form
-  const parts = ip.split(':');
-  const fullParts: string[] = [];
+  // Strip scope id if present (e.g. fe80::1%eth0)
+  const scoped = ip.split('%')[0].toLowerCase();
 
-  for (let i = 0; i < parts.length; i++) {
-    if (parts[i] === '') {
-      const zerosNeeded = 8 - parts.filter(p => p !== '').length;
-      for (let j = 0; j <= zerosNeeded; j++) {
-        fullParts.push('0000');
-      }
-    } else {
-      fullParts.push(parts[i].padStart(4, '0'));
-    }
-  }
+  // Split and expand :: once
+  const parts = scoped.split('::');
+  const left = parts[0]?.split(':').filter(Boolean) ?? [];
+  const right = parts[1]?.split(':').filter(Boolean) ?? [];
 
-  // Convert to nibble format and reverse
-  const nibbles = fullParts.slice(0, 8).join('').split('').reverse().join('.');
-  return nibbles;
+  // Pad to 8 groups
+  const pad = 8 - (left.length + right.length);
+  if (pad < 0) throw new Error('Invalid IPv6 address');
+
+  const full = [...left, ...Array(pad).fill('0'), ...right].map((h) => h.padStart(4, '0'));
+
+  // Convert to nibbles, reverse, dotted
+  return full.join('').split('').reverse().join('.');
 }
 
-async function checkRBL(ip: string, rbl: typeof RBLS[0], isDomain: boolean): Promise<RBLResult> {
+function withTimeout<T>(promise: Promise<T>, ms = DNS_TIMEOUT_MS): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(
+        () =>
+          reject(
+            Object.assign(new Error('DNS query timeout'), {
+              code: 'ETIMEOUT',
+            }),
+          ),
+        ms,
+      ),
+    ),
+  ]);
+}
+
+function pLimit(concurrency: number) {
+  const queue: (() => void)[] = [];
+  let active = 0;
+
+  const next = () => {
+    active--;
+    queue.shift()?.();
+  };
+
+  return <T>(fn: () => Promise<T>) =>
+    new Promise<T>((resolve, reject) => {
+      const run = () => {
+        active++;
+        fn().then(resolve, reject).finally(next);
+      };
+      if (active < concurrency) {
+        run();
+      } else {
+        queue.push(run);
+      }
+    });
+}
+
+function canQuery(rbl: RBL, targetType: DNSBLResponse['targetType']): boolean {
+  if (rbl.type === 'both') return true;
+  if (rbl.type === 'domain') return targetType === 'domain';
+  // rbl.type === 'ip'
+  if (targetType === 'ipv4') return true;
+  if (targetType === 'ipv6') return rbl.supportsIPv6 ?? false;
+  return false;
+}
+
+async function checkRBL(ip: string, rbl: RBL, isDomain: boolean): Promise<RBLResult> {
   const startTime = Date.now();
 
   try {
     let query: string;
 
     if (isDomain) {
-      // For domain blacklists, query domain directly
       query = `${ip}.${rbl.zone}`;
     } else if (isIPv4(ip)) {
       query = `${reverseIPv4(ip)}.${rbl.zone}`;
@@ -120,34 +310,25 @@ async function checkRBL(ip: string, rbl: typeof RBLS[0], isDomain: boolean): Pro
       throw new Error('Invalid IP format');
     }
 
-    const addresses = await dns.resolve4(query);
+    const addresses = (await withTimeout(dns.resolve4(query))) as string[];
     const responseTime = Date.now() - startTime;
 
     // Get TXT record for listing reason
     let reason: string | undefined;
     try {
-      const txtRecords = await dns.resolveTxt(query);
+      const txtRecords = (await withTimeout(dns.resolveTxt(query))) as string[][];
       reason = txtRecords.flat().join(' ');
     } catch {
       // TXT record optional
     }
 
-    // Check if this is an error response rather than actual listing
-    // Many RBLs return specific codes for errors (e.g., 127.255.255.x for errors)
     const response = addresses[0];
-    const isErrorResponse =
-      response.startsWith('127.255.') || // Common error code range
-      (reason && (
-        reason.toLowerCase().includes('open resolver') ||
-        reason.toLowerCase().includes('query refused') ||
-        reason.toLowerCase().includes('not supported') ||
-        reason.toLowerCase().includes('check.spamhaus.org') ||
-        reason.toLowerCase().includes('blocked - see') ||
-        reason.toLowerCase().includes('access denied') ||
-        reason.toLowerCase().includes('please use')
-      ));
+    const isErrorA = response.startsWith('127.255.');
+    const isBlockedTXT = /open resolver|query refused|access denied|blocked - see|please use|not supported/i.test(
+      reason ?? '',
+    );
 
-    if (isErrorResponse) {
+    if (isErrorA || isBlockedTXT) {
       return {
         rbl: rbl.name,
         listed: false,
@@ -168,8 +349,8 @@ async function checkRBL(ip: string, rbl: typeof RBLS[0], isDomain: boolean): Pro
   } catch (err: any) {
     const responseTime = Date.now() - startTime;
 
-    if (err.code === 'ENOTFOUND' || err.code === 'ENODATA') {
-      // Not listed
+    const notListedCodes = new Set(['ENOTFOUND', 'ENODATA']);
+    if (notListedCodes.has(err?.code)) {
       return {
         rbl: rbl.name,
         listed: false,
@@ -177,12 +358,21 @@ async function checkRBL(ip: string, rbl: typeof RBLS[0], isDomain: boolean): Pro
       };
     }
 
-    // Actual error
+    // Handle timeout specifically
+    if (err?.code === 'ETIMEOUT') {
+      return {
+        rbl: rbl.name,
+        listed: false,
+        responseTime,
+        error: 'Query timeout (>1s)',
+      };
+    }
+
     return {
       rbl: rbl.name,
       listed: false,
       responseTime,
-      error: err.message,
+      error: err?.message ?? String(err),
     };
   }
 }
@@ -206,7 +396,6 @@ async function resolveTarget(target: string): Promise<{ type: 'ipv4' | 'ipv6' | 
       ips.push(...ipv4s);
     } catch (err) {
       lastError = err as Error;
-      // No IPv4
     }
 
     try {
@@ -214,11 +403,9 @@ async function resolveTarget(target: string): Promise<{ type: 'ipv4' | 'ipv6' | 
       ips.push(...ipv6s);
     } catch (err) {
       if (!lastError) lastError = err as Error;
-      // No IPv6
     }
 
     if (ips.length === 0) {
-      // Provide helpful error message based on DNS error
       if (lastError && 'code' in lastError) {
         if (lastError.code === 'ENOTFOUND') {
           throw new Error(`Domain "${target}" does not exist or could not be found`);
@@ -246,42 +433,58 @@ export const POST: RequestHandler = async ({ request }) => {
       throw error(400, 'Target IP or domain is required');
     }
 
-    const trimmedTarget = target.trim().toLowerCase();
+    let trimmedTarget = target.trim().toLowerCase();
 
-    // Resolve target
+    // Strip trailing dot on FQDNs
+    if (trimmedTarget.endsWith('.')) {
+      trimmedTarget = trimmedTarget.slice(0, -1);
+    }
+
+    // Normalize domains with punycode (if available in Node.js version)
+    if (!isIPv4(trimmedTarget) && !isIPv6(trimmedTarget)) {
+      try {
+        // Try to use domainToASCII if available
+        const urlModule = await import('node:url');
+        if ('domainToASCII' in urlModule) {
+          trimmedTarget = (urlModule as any).domainToASCII(trimmedTarget);
+        }
+      } catch {
+        // If punycode fails, continue with original
+      }
+    }
+
     const { type, ips } = await resolveTarget(trimmedTarget);
 
+    const limit = pLimit(CONCURRENCY_LIMIT);
     let allResults: RBLResult[] = [];
 
     if (type === 'domain') {
-      // Check domain blacklists (DBL)
-      const domainRBLs = RBLS.filter(rbl => rbl.zone.includes('dbl'));
-      const domainChecks = domainRBLs.map(rbl => checkRBL(trimmedTarget, rbl, true));
-      const domainResults = await Promise.all(domainChecks);
-      allResults.push(...domainResults);
+      // Check domain blacklists
+      const domainRBLs = RBLS.filter((r) => canQuery(r, 'domain'));
+      const domainChecks = domainRBLs.map((rbl) => limit(() => checkRBL(trimmedTarget, rbl, true)));
+      allResults.push(...(await Promise.all(domainChecks)));
 
       // Check IPs against IP blacklists
-      if (ips && ips.length > 0) {
-        const ipRBLs = RBLS.filter(rbl => !rbl.zone.includes('dbl'));
-
+      if (ips?.length) {
         for (const ip of ips) {
-          const ipChecks = ipRBLs.map(rbl => checkRBL(ip, rbl, false));
+          const ipType = isIPv4(ip) ? 'ipv4' : 'ipv6';
+          const ipRBLs = RBLS.filter((r) => canQuery(r, ipType));
+          const ipChecks = ipRBLs.map((rbl) => limit(() => checkRBL(ip, rbl, false)));
           const ipResults = await Promise.all(ipChecks);
-          allResults.push(...ipResults.map(r => ({ ...r, rbl: `${r.rbl} (${ip})` })));
+          allResults.push(...ipResults.map((r) => ({ ...r, rbl: `${r.rbl} (${ip})` })));
         }
       }
     } else {
-      // Check IP against all IP blacklists
-      const ipRBLs = RBLS.filter(rbl => !rbl.zone.includes('dbl'));
-      const checks = ipRBLs.map(rbl => checkRBL(trimmedTarget, rbl, false));
+      const ipRBLs = RBLS.filter((r) => canQuery(r, type));
+      const checks = ipRBLs.map((rbl) => limit(() => checkRBL(trimmedTarget, rbl, false)));
       allResults = await Promise.all(checks);
     }
 
     const summary = {
       totalChecked: allResults.length,
-      listedCount: allResults.filter(r => r.listed).length,
-      cleanCount: allResults.filter(r => !r.listed && !r.error).length,
-      errorCount: allResults.filter(r => r.error).length,
+      listedCount: allResults.filter((r) => r.listed).length,
+      cleanCount: allResults.filter((r) => !r.listed && !r.error).length,
+      errorCount: allResults.filter((r) => r.error).length,
     };
 
     const response: DNSBLResponse = {

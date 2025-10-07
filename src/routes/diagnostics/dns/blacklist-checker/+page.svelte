@@ -1,6 +1,7 @@
 <script lang="ts">
-  import { tooltip } from '$lib/actions/tooltip.js';
+  import { tooltip } from '$lib/actions/tooltip';
   import Icon from '$lib/components/global/Icon.svelte';
+  import { dnsblContent } from '$lib/content/dnsbl';
   import '../../../../styles/diagnostics-pages.scss';
 
   let target = $state('');
@@ -13,15 +14,16 @@
   function toggleExpand(rblName: string) {
     expandedItems = {
       ...expandedItems,
-      [rblName]: !expandedItems[rblName]
+      [rblName]: !expandedItems[rblName],
     };
   }
 
   const examples = [
-    { target: 'example.com', description: 'Example.com (12 IPs, Clean Domain)' },
-    { target: '127.0.0.2', description: 'RBL Test IP (Multiple Listings)' },
+    { target: 'example.com', description: 'Example.com (many IPs, all clean)' },
+    { target: '127.0.0.2', description: 'RBL Test IP (Flagged as span)' },
     { target: '1.1.1.1', description: 'Cloudflare DNS (Clean IP)' },
     { target: '::FFFF:7F00:2', description: 'Local IPv6' },
+    { target: 'networkingtoolbox.net', description: 'networkingtoolbox.net' },
   ];
 
   const isInputValid = $derived(() => {
@@ -115,7 +117,13 @@
 
   <!-- Input Form -->
   <div class="card input-card">
-    <form class="inline-form" onsubmit={(e) => { e.preventDefault(); checkBlacklist(); }}>
+    <form
+      class="inline-form"
+      onsubmit={(e) => {
+        e.preventDefault();
+        checkBlacklist();
+      }}
+    >
       <div class="form-group flex-grow">
         <label for="target">IP Address or Domain</label>
         <input
@@ -172,7 +180,11 @@
       </div>
 
       <!-- Summary -->
-      <div class="summary-section" class:clean={results.summary.listedCount === 0} class:listed={results.summary.listedCount > 0}>
+      <div
+        class="summary-section"
+        class:clean={results.summary.listedCount === 0}
+        class:listed={results.summary.listedCount > 0}
+      >
         <div class="summary-header">
           <Icon name={results.summary.listedCount === 0 ? 'check-circle' : 'alert-triangle'} size="lg" />
           <div>
@@ -328,52 +340,132 @@
             <div class="warning-info">
               <p>
                 <Icon name="info" size="xs" />
-                These RBLs could not be queried, possibly due to rate limiting, public resolver restrictions, or API access requirements.
-                This does not indicate a listing.
+                These RBLs could not be queried, possibly due to rate limiting, public resolver restrictions, or API access
+                requirements. This does not indicate a listing.
               </p>
             </div>
           </details>
         </div>
       {/if}
 
-      <!-- Additional Info -->
-      <div class="card info-card">
-        <details>
-          <summary class="card-header clickable">
-            <span class="chevron">
-              <Icon name="chevron-right" size="xs" />
-            </span>
-            <h4>What do these results mean?</h4>
-          </summary>
-          <div class="card-content">
-            <div class="info-section">
-              <h5>Understanding Blacklists</h5>
-              <p>
-                DNS Blacklists (DNSBLs or RBLs) are databases used to identify IP addresses or domains known for sending spam,
-                hosting malware, or engaging in malicious activities. Email servers check these lists to filter unwanted mail.
-              </p>
+      <!-- Query Warnings (collapsible) -->
+      {#if results}
+        <div class="card info-card">
+          <details>
+            <summary class="card-header clickable">
+              <span class="chevron">
+                <Icon name="chevron-right" size="xs" />
+              </span>
+              <h4>{dnsblContent.sections.queryWarnings.title}</h4>
+            </summary>
+            <div class="card-content">
+              <div class="info-section">
+                <p>{dnsblContent.sections.queryWarnings.content}</p>
+                <div class="warnings-list">
+                  {#each dnsblContent.sections.queryWarnings.warnings as warning (warning.type)}
+                    <div class="warning-item">
+                      <strong>{warning.type}</strong>
+                      <p class="warning-meaning">{warning.meaning}</p>
+                      <p class="warning-action">{warning.action}</p>
+                    </div>
+                  {/each}
+                </div>
+              </div>
             </div>
-            <div class="info-section">
-              <h5>If You're Listed</h5>
-              <ul>
-                <li>Check the blacklist's website for delisting procedures</li>
-                <li>Investigate the cause (compromised system, open relay, etc.)</li>
-                <li>Fix the underlying issue before requesting removal</li>
-                <li>Most lists automatically delist after a period without incidents</li>
-              </ul>
-            </div>
-            <div class="info-section">
-              <h5>Major Blacklists Checked</h5>
-              <p>
-                This tool checks against major RBLs including Spamhaus (ZEN, SBL, XBL, PBL, DBL), SORBS, SpamCop, Barracuda,
-                UCEPROTECT, PSBL, CBL, and DroneBL. These are commonly used by email servers worldwide.
-              </p>
-            </div>
-          </div>
-        </details>
-      </div>
+          </details>
+        </div>
+      {/if}
     </div>
   {/if}
+</div>
+
+<!-- Always visible informational content -->
+<div class="info-sections">
+  <div class="card">
+    <div class="card-header">
+      <h2>{dnsblContent.sections.whatAreBlacklists.title}</h2>
+    </div>
+    <div class="card-content">
+      <p>{dnsblContent.sections.whatAreBlacklists.content}</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2>{dnsblContent.sections.consequences.title}</h2>
+    </div>
+    <div class="card-content">
+      <p>{dnsblContent.sections.consequences.content}</p>
+      <div class="compact-impacts">
+        {#each dnsblContent.sections.consequences.impacts.slice(0, 3) as impact (impact.impact)}
+          <div class="compact-impact">
+            <span class="severity-badge {impact.severity.toLowerCase()}">{impact.severity}</span>
+            <strong>{impact.impact}</strong>
+            <span class="impact-desc">{impact.description}</span>
+          </div>
+        {/each}
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2>{dnsblContent.sections.howToFix.title}</h2>
+    </div>
+    <div class="card-content">
+      <p>{dnsblContent.sections.howToFix.content}</p>
+      <div class="fix-steps-compact">
+        {#each dnsblContent.sections.howToFix.steps as stepGroup (stepGroup.step)}
+          <div class="step-compact">
+            <h4>{stepGroup.step}</h4>
+            <ul>
+              {#each stepGroup.actions.slice(0, 3) as action, idx (`${stepGroup.step}-${idx}`)}
+                <li>{action}</li>
+              {/each}
+            </ul>
+          </div>
+        {/each}
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2>{dnsblContent.sections.majorBlacklists.title}</h2>
+    </div>
+    <div class="card-content">
+      <div class="blacklists-grid">
+        {#each dnsblContent.sections.majorBlacklists.lists as list (list.name)}
+          <div class="blacklist-card">
+            <div class="blacklist-header">
+              <strong>{list.name}</strong>
+              <span class="type-badge">{list.type}</span>
+            </div>
+            <p>{list.description}</p>
+            <div class="blacklist-details">
+              <div class="detail-row">
+                <span class="label">Usage:</span>
+                <span>{list.usage}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Auto-removal:</span>
+                <span>{list.autoRemoval}</span>
+              </div>
+              {#if list.url}
+                <div class="detail-row">
+                  <span class="label">Website:</span>
+                  <a href={list.url} target="_blank" rel="noopener noreferrer" class="blacklist-link">
+                    <Icon name="external-link" size="xs" />
+                    Check listing status
+                  </a>
+                </div>
+              {/if}
+            </div>
+          </div>
+        {/each}
+      </div>
+    </div>
+  </div>
 </div>
 
 <style lang="scss">
@@ -454,13 +546,19 @@
       }
     }
     &.success {
-      .card-header h3 :global(.icon) { color: var(--color-success);}
+      .card-header h3 :global(.icon) {
+        color: var(--color-success);
+      }
     }
     &.warning {
-      .card-header h3 :global(.icon) { color: var(--color-warning);}
+      .card-header h3 :global(.icon) {
+        color: var(--color-warning);
+      }
     }
     &.error {
-      .card-header h3 :global(.icon) { color: var(--color-error);}
+      .card-header h3 :global(.icon) {
+        color: var(--color-error);
+      }
     }
 
     details {
@@ -623,7 +721,8 @@
         flex-shrink: 0;
       }
 
-      code, .value {
+      code,
+      .value {
         color: var(--text-primary);
         word-break: break-word;
         flex: 1;
@@ -715,27 +814,10 @@
         margin-bottom: 0;
       }
 
-      h5 {
-        color: var(--text-primary);
-        margin: 0 0 var(--spacing-xs) 0;
-        font-size: var(--font-size-md);
-      }
-
       p {
         color: var(--text-secondary);
         line-height: 1.6;
         margin: 0;
-      }
-
-      ul {
-        margin: var(--spacing-xs) 0 0 0;
-        padding-left: var(--spacing-lg);
-        color: var(--text-secondary);
-        line-height: 1.6;
-
-        li {
-          margin-bottom: var(--spacing-2xs);
-        }
       }
     }
   }
@@ -777,7 +859,253 @@
     align-items: center;
     padding: var(--spacing-md);
     gap: var(--spacing-md);
-    p { margin: 0; }
+    p {
+      margin: 0;
+    }
+  }
+
+  // Info sections (always visible)
+  .info-sections {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+    margin-top: var(--spacing-xl);
+    border-top: 1px solid var(--border-primary);
+    padding-top: var(--spacing-lg);
+
+    .card {
+      width: 100%;
+      background: var(--bg-secondary);
+    }
+
+    .card-header {
+      h2 {
+        font-size: var(--font-size-lg);
+        margin: 0;
+        color: var(--text-primary);
+      }
+    }
+
+    .card-content {
+      p {
+        color: var(--text-secondary);
+        line-height: 1.6;
+        margin-bottom: var(--spacing-md);
+      }
+    }
+  }
+
+  .compact-impacts {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .compact-impact {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    background: var(--bg-primary);
+    border-radius: var(--radius-md);
+    border-left: 3px solid var(--border-primary);
+
+    .severity-badge {
+      font-size: var(--font-size-xs);
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+      color: var(--bg-primary);
+      min-width: 5rem;
+      text-align: center;
+
+      &.critical {
+        background: var(--color-error);
+      }
+
+      &.high {
+        background: var(--color-warning);
+      }
+
+      &.medium {
+        background: var(--color-info);
+      }
+
+      &.low {
+        background: var(--text-tertiary);
+      }
+    }
+
+    strong {
+      min-width: 140px;
+      color: var(--text-primary);
+      font-size: var(--font-size-sm);
+    }
+
+    .impact-desc {
+      color: var(--text-secondary);
+      font-size: var(--font-size-sm);
+      flex: 1;
+    }
+  }
+
+  .fix-steps-compact {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--spacing-md);
+  }
+
+  .step-compact {
+    padding: var(--spacing-md);
+    background: var(--bg-primary);
+    border-radius: var(--radius-md);
+    border-left: 3px solid var(--color-primary);
+
+    h4 {
+      margin: 0 0 var(--spacing-sm) 0;
+      color: var(--color-primary);
+      font-size: var(--font-size-md);
+    }
+
+    ul {
+      margin: 0;
+      padding-left: var(--spacing-lg);
+      color: var(--text-secondary);
+      font-size: var(--font-size-sm);
+
+      li {
+        margin-bottom: var(--spacing-2xs);
+        line-height: 1.5;
+      }
+    }
+  }
+
+  // New content section styles
+  .impact-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-md);
+  }
+
+  .warnings-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-md);
+  }
+
+  .warning-item {
+    padding: var(--spacing-md);
+    background: var(--bg-primary);
+    border-radius: var(--radius-md);
+    border-left: 3px solid var(--color-info);
+
+    strong {
+      color: var(--text-primary);
+      display: block;
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .warning-meaning {
+      font-size: var(--font-size-sm);
+      color: var(--text-secondary);
+      margin: var(--spacing-xs) 0;
+    }
+
+    .warning-action {
+      font-size: var(--font-size-sm);
+      color: var(--text-tertiary);
+      margin: var(--spacing-xs) 0 0 0;
+      font-style: italic;
+    }
+  }
+
+  .blacklists-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-md);
+  }
+
+  .blacklist-card {
+    padding: var(--spacing-md);
+    background: var(--bg-primary);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-primary);
+    transition: border-color var(--transition-fast);
+    .blacklist-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--spacing-sm);
+
+      strong {
+        color: var(--text-primary);
+        font-size: var(--font-size-md);
+      }
+    }
+
+    .type-badge {
+      font-size: var(--font-size-xs);
+      padding: 2px 8px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    p {
+      font-size: var(--font-size-sm);
+      color: var(--text-secondary);
+      margin: var(--spacing-sm) 0;
+      line-height: 1.5;
+    }
+
+    .blacklist-details {
+      margin-top: var(--spacing-sm);
+      padding-top: var(--spacing-sm);
+      border-top: 1px solid var(--border-primary);
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-xs);
+
+      .detail-row {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xs);
+        margin-bottom: var(--spacing-2xs);
+        font-size: var(--font-size-sm);
+
+        .label {
+          color: var(--text-tertiary);
+          font-weight: 600;
+          min-width: 100px;
+        }
+
+        span:not(.label) {
+          color: var(--text-secondary);
+        }
+      }
+
+      .blacklist-link {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-2xs);
+        color: var(--color-primary);
+        text-decoration: none;
+        font-weight: 500;
+        transition: color var(--transition-fast);
+
+        &:hover {
+          color: var(--color-primary-dark);
+          text-decoration: underline;
+        }
+      }
+    }
   }
 
   @media (max-width: 768px) {
@@ -798,6 +1126,30 @@
       .label {
         min-width: auto;
         font-weight: 600;
+      }
+    }
+
+    .impact-grid,
+    .blacklists-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .blacklist-card .blacklist-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--spacing-xs);
+    }
+
+    .fix-steps-compact {
+      grid-template-columns: 1fr;
+    }
+
+    .compact-impact {
+      flex-direction: column;
+      align-items: flex-start;
+
+      strong {
+        min-width: auto;
       }
     }
   }
