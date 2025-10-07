@@ -1,10 +1,9 @@
 import { describe, it, expect } from 'vitest';
+import { API_BASE_URL } from '../utils/api-test-helpers';
 
 describe('DNS Performance API', () => {
-	const BASE_URL = 'http://localhost:5173';
-
 	async function makeRequest(body: any) {
-		const response = await fetch(`${BASE_URL}/api/internal/diagnostics/dns-performance`, {
+		const response = await fetch(`${API_BASE_URL}/api/internal/diagnostics/dns-performance`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(body)
@@ -406,7 +405,7 @@ describe('DNS Performance API', () => {
 		});
 
 		it('should reject invalid JSON', async () => {
-			const response = await fetch(`${BASE_URL}/api/internal/diagnostics/dns-performance`, {
+			const response = await fetch(`${API_BASE_URL}/api/internal/diagnostics/dns-performance`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: 'not valid json'

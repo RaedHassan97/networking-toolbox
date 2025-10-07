@@ -1,10 +1,9 @@
 import { describe, it, expect } from 'vitest';
+import { API_BASE_URL } from '../utils/api-test-helpers';
 
 describe('DNSBL Blacklist Checker API', () => {
-	const BASE_URL = 'http://localhost:5173';
-
 	async function makeRequest(target: string) {
-		const response = await fetch(`${BASE_URL}/api/internal/diagnostics/dnsbl`, {
+		const response = await fetch(`${API_BASE_URL}/api/internal/diagnostics/dnsbl`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ target })
@@ -213,7 +212,7 @@ describe('DNSBL Blacklist Checker API', () => {
 		});
 
 		it('should reject missing target', async () => {
-			const response = await fetch(`${BASE_URL}/api/internal/diagnostics/dnsbl`, {
+			const response = await fetch(`${API_BASE_URL}/api/internal/diagnostics/dnsbl`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({})

@@ -7,6 +7,8 @@ import { promisify } from 'util';
 // @ts-expect-error - Node.js core modules work at runtime
 import { promises as dns } from 'dns';
 
+export const config = { runtime: 'nodejs' };
+
 const execAsync = promisify(exec);
 
 interface AXFRRequest {
