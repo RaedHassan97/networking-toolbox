@@ -43,6 +43,8 @@ const RESOLVERS = [
 
 const DNS_TIMEOUT_MS = 5000;
 const RECORD_TYPES = ['A', 'AAAA', 'MX', 'TXT', 'NS', 'CNAME', 'SOA'] as const;
+const MAX_DOMAIN_LENGTH = 253;
+const DOMAIN_PATTERN = /^([a-zA-Z0-9_]([a-zA-Z0-9_-]{0,61}[a-zA-Z0-9_])?\.)+[a-zA-Z]{2,}$/;
 
 function withTimeout<T>(promise: Promise<T>, ms = DNS_TIMEOUT_MS): Promise<T> {
 	return Promise.race([
@@ -51,6 +53,11 @@ function withTimeout<T>(promise: Promise<T>, ms = DNS_TIMEOUT_MS): Promise<T> {
 			setTimeout(() => reject(Object.assign(new Error('DNS query timeout'), { code: 'ETIMEOUT' })), ms)
 		),
 	]);
+}
+
+function validateDomain(domain: string): boolean {
+	if (!domain || domain.length > MAX_DOMAIN_LENGTH) return false;
+	return DOMAIN_PATTERN.test(domain);
 }
 
 async function queryResolver(
@@ -104,7 +111,12 @@ async function queryResolver(
 
 export const POST: RequestHandler = async ({ request }) => {
 	try {
-		const body: DNSPerformanceRequest = await request.json();
+		let body: DNSPerformanceRequest;
+		try {
+			body = await request.json();
+		} catch {
+			throw error(400, 'Invalid JSON in request body');
+		}
 		const { domain, recordType = 'A' } = body;
 
 		if (!domain || typeof domain !== 'string' || !domain.trim()) {
@@ -112,6 +124,11 @@ export const POST: RequestHandler = async ({ request }) => {
 		}
 
 		const trimmedDomain = domain.trim().toLowerCase();
+
+		// Validate domain format
+		if (!validateDomain(trimmedDomain)) {
+			throw error(400, 'Invalid domain name format');
+		}
 
 		// Validate record type
 		if (!RECORD_TYPES.includes(recordType.toUpperCase() as any)) {

@@ -2,90 +2,149 @@
 	import { tooltip } from '$lib/actions/tooltip';
 	import Icon from '$lib/components/global/Icon.svelte';
 	import { dnsPerformanceContent } from '$lib/content/dns-performance';
-	import '../../../../styles/diagnostics-pages.scss';
+	import '$lib/../styles/diagnostics-pages.scss';
 
-	let domain = $state('');
-	let recordType = $state('A');
-	let loading = $state(false);
-	let results = $state<any>(null);
-	let error = $state<string | null>(null);
-	let selectedExampleIndex = $state<number | null>(null);
+	type ResolverResult = {
+		resolver: string;
+		resolverName: string;
+		success: boolean;
+		responseTime: number;
+		records?: string[];
+		error?: string;
+	};
 
-	const examples = [
+	type PerfStats = {
+		fastest: { resolver: string; time: number };
+		slowest: { resolver: string; time: number };
+		average: number;
+		median: number;
+		successRate: number;
+	};
+
+	type PerfResponse = {
+		domain: string;
+		recordType: string;
+		timestamp: string;
+		results: ResolverResult[];
+		statistics: PerfStats;
+	};
+
+	const API_ENDPOINT = '/api/internal/diagnostics/dns-performance';
+	const RECORD_TYPES = ['A', 'AAAA', 'MX', 'TXT', 'NS', 'CNAME', 'SOA'] as const;
+	const EXAMPLES = [
 		{ domain: 'google.com', type: 'A', description: 'Google.com A records' },
 		{ domain: 'cloudflare.com', type: 'AAAA', description: 'Cloudflare IPv6' },
 		{ domain: 'github.com', type: 'MX', description: 'GitHub mail servers' },
 		{ domain: 'example.com', type: 'NS', description: 'Example.com nameservers' },
-	];
+	] as const;
 
-	const recordTypes = ['A', 'AAAA', 'MX', 'TXT', 'NS', 'CNAME', 'SOA'];
+	const PERF_RANGES = [
+		{ max: 20, class: 'excellent', label: 'Excellent' },
+		{ max: 50, class: 'good', label: 'Good' },
+		{ max: 100, class: 'acceptable', label: 'Acceptable' },
+		{ max: 200, class: 'slow', label: 'Slow' },
+		{ max: Infinity, class: 'very-slow', label: 'Very Slow' },
+	] as const;
+
+	let domain = $state('');
+	let recordType = $state('A');
+	let loading = $state(false);
+	let results = $state<PerfResponse | null>(null);
+	let error = $state<string | null>(null);
+	let selectedExampleIndex = $state<number | null>(null);
+	let abortController = $state<AbortController | null>(null);
+	let requestId = $state(0);
 
 	const isInputValid = $derived.by(() => {
 		const trimmed = domain.trim();
 		if (!trimmed) return false;
-		const domainPattern = /^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/;
+		// Support underscores for _acme-challenge and similar
+		const domainPattern = /^([a-zA-Z0-9_]([a-zA-Z0-9_-]{0,61}[a-zA-Z0-9_])?\.)+[a-zA-Z]{2,}$/;
 		return domainPattern.test(trimmed);
 	});
 
 	const sortedResults = $derived.by(() => {
 		if (!results?.results) return [];
-		return [...results.results].sort((a: any, b: any) =>
+		return [...results.results].sort((a, b) =>
 			a.success && b.success ? a.responseTime - b.responseTime : a.success ? -1 : 1
 		);
 	});
 
-	function getPerformanceClass(time: number): string {
-		if (time < 20) return 'excellent';
-		if (time < 50) return 'good';
-		if (time < 100) return 'acceptable';
-		if (time < 200) return 'slow';
-		return 'very-slow';
-	}
+	const successCount = $derived(results?.results.filter((r) => r.success).length ?? 0);
+	const totalCount = $derived(results?.results.length ?? 0);
+	const formattedTimestamp = $derived(
+		results?.timestamp ? new Date(results.timestamp).toLocaleString() : ''
+	);
+	const totalRecords = $derived(
+		sortedResults.reduce((sum, r) => sum + (r.records?.length ?? 0), 0)
+	);
+	const fastestResolver = $derived(results?.statistics.fastest.resolver ?? '');
+	const performanceSpread = $derived(
+		results
+			? Math.round(
+					(results.statistics.slowest.time - results.statistics.fastest.time) * 100
+				) / 100
+			: 0
+	);
 
-	function getPerformanceLabel(time: number): string {
-		if (time < 20) return 'Excellent';
-		if (time < 50) return 'Good';
-		if (time < 100) return 'Acceptable';
-		if (time < 200) return 'Slow';
-		return 'Very Slow';
+	function getPerformance(time: number) {
+		const range = PERF_RANGES.find((r) => time < r.max)!;
+		return { class: range.class, label: range.label };
 	}
 
 	async function testPerformance() {
 		if (!isInputValid) return;
 
+		// Cancel previous request
+		abortController?.abort();
+		const controller = new AbortController();
+		abortController = controller;
+
+		const currentRequestId = ++requestId;
 		loading = true;
 		error = null;
 		results = null;
 
 		try {
-			const response = await fetch('/api/internal/diagnostics/dns-performance', {
+			const response = await fetch(API_ENDPOINT, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ domain: domain.trim(), recordType }),
+				signal: controller.signal,
 			});
 
+			// Ignore stale responses
+			if (currentRequestId !== requestId) return;
+
 			if (!response.ok) {
-				const data = await response.json();
-				throw new Error(data.message || 'Failed to test DNS performance');
+				let errorMsg = 'Failed to test DNS performance';
+				try {
+					const data = await response.json();
+					errorMsg = data.message || errorMsg;
+				} catch {
+					errorMsg = await response.text();
+				}
+				throw new Error(errorMsg);
 			}
 
 			results = await response.json();
 		} catch (err) {
+			if (currentRequestId !== requestId) return;
+			if (err instanceof Error && err.name === 'AbortError') return;
 			error = err instanceof Error ? err.message : 'An unexpected error occurred';
 		} finally {
-			loading = false;
+			if (currentRequestId === requestId) {
+				loading = false;
+			}
 		}
 	}
 
-	function loadExample(example: (typeof examples)[0], index: number) {
+	function loadExample(index: number) {
+		const example = EXAMPLES[index];
 		domain = example.domain;
 		recordType = example.type;
 		selectedExampleIndex = index;
 		testPerformance();
-	}
-
-	function clearExampleSelection() {
-		selectedExampleIndex = null;
 	}
 </script>
 
@@ -115,11 +174,11 @@
 				<h4>Quick Examples</h4>
 			</summary>
 			<div class="examples-grid">
-				{#each examples as example, i (i)}
+				{#each EXAMPLES as example, i (i)}
 					<button
 						class="example-card"
 						class:selected={selectedExampleIndex === i}
-						onclick={() => loadExample(example, i)}
+						onclick={() => loadExample(i)}
 						use:tooltip={`Test ${example.domain} ${example.type} records`}
 					>
 						<h5>{example.description}</h5>
@@ -138,6 +197,7 @@
 				e.preventDefault();
 				testPerformance();
 			}}
+			aria-busy={loading}
 		>
 			<div class="form-group flex-grow">
 				<label for="domain">Domain Name</label>
@@ -150,17 +210,25 @@
 					}}
 					placeholder="e.g., google.com"
 					disabled={loading}
+					autocomplete="off"
+					inputmode="url"
+					aria-invalid={!!(domain && !isInputValid)}
 				/>
 			</div>
 			<div class="form-group">
 				<label for="recordType">Record Type</label>
 				<select id="recordType" bind:value={recordType} disabled={loading}>
-					{#each recordTypes as type (type)}
+					{#each RECORD_TYPES as type (type)}
 						<option value={type}>{type}</option>
 					{/each}
 				</select>
 			</div>
-			<button type="submit" disabled={loading || !isInputValid} class="primary submit-btn">
+			<button
+				type="submit"
+				disabled={loading || !isInputValid}
+				class="primary submit-btn"
+				aria-busy={loading}
+			>
 				{#if loading}
 					<Icon name="loader" size="sm" animate="spin" />
 					Testing...
@@ -184,7 +252,7 @@
 	{/if}
 
 	{#if loading}
-		<div class="card">
+		<div class="card" role="status" aria-live="polite">
 			<div class="card-content">
 				<div class="loading-state">
 					<Icon name="loader" size="lg" animate="spin" />
@@ -235,9 +303,7 @@
 					<div class="stat-content">
 						<span class="stat-label">Success Rate</span>
 						<span class="stat-value">{results.statistics.successRate}%</span>
-						<span class="stat-detail"
-							>{results.results.filter((r: any) => r.success).length}/{results.results.length}</span
-						>
+						<span class="stat-detail">{successCount}/{totalCount}</span>
 					</div>
 				</div>
 			</div>
@@ -245,16 +311,32 @@
 			<!-- Query Info -->
 			<div class="query-info">
 				<div class="info-item">
-					<span class="label">Domain:</span>
+					<span class="label">Domain</span>
 					<span class="value">{results.domain}</span>
 				</div>
 				<div class="info-item">
-					<span class="label">Record Type:</span>
+					<span class="label">Record Type</span>
 					<span class="value">{results.recordType}</span>
 				</div>
 				<div class="info-item">
-					<span class="label">Timestamp:</span>
-					<span class="value">{new Date(results.timestamp).toLocaleString()}</span>
+					<span class="label">Total Records</span>
+					<span class="value">{totalRecords}</span>
+				</div>
+				<div class="info-item">
+					<span class="label">Resolvers Tested</span>
+					<span class="value">{successCount} of {totalCount} successful</span>
+				</div>
+				<div class="info-item">
+					<span class="label">Performance Spread</span>
+					<span class="value">{performanceSpread}ms</span>
+				</div>
+				<div class="info-item">
+					<span class="label">Fastest</span>
+					<span class="value">{fastestResolver}</span>
+				</div>
+				<div class="info-item">
+					<span class="label">Tested</span>
+					<span class="value">{formattedTimestamp}</span>
 				</div>
 			</div>
 
@@ -263,16 +345,17 @@
 				<h3>Resolver Comparison</h3>
 				<div class="resolvers-list">
 					{#each sortedResults as result (result.resolver)}
+						{@const perf = result.success ? getPerformance(result.responseTime) : null}
 						<div class="resolver-card" class:failed={!result.success}>
 							<div class="resolver-header">
 								<div class="resolver-info">
 									<strong>{result.resolverName}</strong>
 									<span class="resolver-ip">{result.resolver}</span>
 								</div>
-								{#if result.success}
-									<div class="performance-badge {getPerformanceClass(result.responseTime)}">
+								{#if perf}
+									<div class="performance-badge {perf.class}">
 										<span class="time">{result.responseTime}ms</span>
-										<span class="label">{getPerformanceLabel(result.responseTime)}</span>
+										<span class="label">{perf.label}</span>
 									</div>
 								{:else}
 									<div class="error-badge">
@@ -282,7 +365,7 @@
 								{/if}
 							</div>
 
-							{#if result.success && result.records && result.records.length > 0}
+							{#if result.records?.length}
 								<details class="records-details">
 									<summary>
 										<Icon name="chevron-right" size="xs" />
@@ -350,7 +433,7 @@
 				{#each dnsPerformanceContent.sections.publicResolvers.resolvers as resolver (resolver.name)}
 					<div class="resolver-info-card">
 						<div class="resolver-info-header">
-							<strong>{resolver.name}</strong>
+							<h4>{resolver.name} (<a href={`https://${resolver.ip}`} target="_blank" rel="nofollow">{resolver.ip}</a>)</h4>
 						</div>
 						<p class="resolver-desc">{resolver.description}</p>
 						<div class="pros-cons">
@@ -376,9 +459,13 @@
 									{/each}
 								</ul>
 							</div>
-						</div>
 						<div class="best-for">
-							<strong>Best for:</strong> {resolver.bestFor}
+							<h5>
+								<Icon name="info-circle" size="xs" />
+								Best for
+							</h5>
+							<p>{resolver.bestFor}</p>
+						</div>
 						</div>
 					</div>
 				{/each}
@@ -394,10 +481,7 @@
 			<div class="tips-list">
 				{#each dnsPerformanceContent.sections.optimization.tips as tip (tip.tip)}
 					<div class="tip-item">
-						<h4>
-							<Icon name="lightbulb" size="xs" />
-							{tip.tip}
-						</h4>
+						<h4>{tip.tip}</h4>
 						<p>{tip.description}</p>
 					</div>
 				{/each}
@@ -462,28 +546,24 @@
 	.stat-card {
 		display: flex;
 		align-items: center;
-		gap: var(--spacing-md);
+		gap: var(--spacing-sm);
 		padding: var(--spacing-md);
 		background: var(--bg-secondary);
 		border-radius: var(--radius-md);
-		border-left: 3px solid var(--border-primary);
-
 		&.fastest {
-			border-left-color: var(--color-success);
-			background: linear-gradient(
-				135deg,
-				color-mix(in srgb, var(--color-success), transparent 95%),
-				color-mix(in srgb, var(--color-success), transparent 98%)
-			);
+			:global(.icon) { color: var(--color-success); }
 		}
 
 		&.slowest {
-			border-left-color: var(--color-warning);
-			background: linear-gradient(
-				135deg,
-				color-mix(in srgb, var(--color-warning), transparent 95%),
-				color-mix(in srgb, var(--color-warning), transparent 98%)
-			);
+			:global(.icon) { color: var(--color-warning); }
+		}
+
+		&.average {
+			:global(.icon) { color: var(--color-info); }
+		}
+
+		&.success {
+			:global(.icon) { color: var(--color-info); }
 		}
 
 		.stat-content {
@@ -514,16 +594,20 @@
 
 	.query-info {
 		display: flex;
-		gap: var(--spacing-lg);
+		gap: var(--spacing-sm);
 		padding: var(--spacing-md);
-		background: var(--bg-tertiary);
+		background: var(--bg-secondary);
 		border-radius: var(--radius-sm);
-		flex-wrap: wrap;
+		justify-content: space-evenly;
 
 		.info-item {
 			display: flex;
 			gap: var(--spacing-xs);
 			font-size: var(--font-size-sm);
+			background: var(--bg-tertiary);
+			padding: var(--spacing-xs) var(--spacing-sm);
+			border-radius: var(--radius-sm);
+			text-align: center;
 
 			.label {
 				color: var(--text-tertiary);
@@ -590,8 +674,7 @@
 			display: flex;
 			flex-direction: column;
 			align-items: center;
-			gap: var(--spacing-2xs);
-			padding: var(--spacing-sm);
+			padding: var(--spacing-xs) var(--spacing-sm);
 			border-radius: var(--radius-sm);
 			min-width: 90px;
 
@@ -647,7 +730,7 @@
 		}
 
 		.records-details {
-			margin-top: var(--spacing-md);
+			margin-top: var(--spacing-xs);
 
 			summary {
 				display: flex;
@@ -730,7 +813,6 @@
 			p {
 				color: var(--text-secondary);
 				line-height: 1.6;
-				margin-bottom: var(--spacing-md);
 			}
 		}
 	}
@@ -749,14 +831,17 @@
 
 		&.success {
 			border-left-color: var(--color-success);
+			.range-perf { color: var(--color-success); }
 		}
 
 		&.warning {
 			border-left-color: var(--color-warning);
+			.range-perf { color: var(--color-warning); }
 		}
 
 		&.error {
 			border-left-color: var(--color-error);
+			.range-perf { color: var(--color-error); }
 		}
 
 		.range-header {
@@ -774,7 +859,6 @@
 			.range-perf {
 				font-size: var(--font-size-sm);
 				font-weight: 600;
-				color: var(--text-secondary);
 			}
 		}
 
@@ -800,9 +884,13 @@
 		.resolver-info-header {
 			margin-bottom: var(--spacing-sm);
 
-			strong {
+			h4 {
 				font-size: var(--font-size-md);
 				color: var(--text-primary);
+				a {
+					color: var(--text-primary);
+					text-decoration: underline;
+				}
 			}
 		}
 
@@ -816,7 +904,6 @@
 			display: flex;
 			flex-direction: column;
 			gap: var(--spacing-md);
-			margin-bottom: var(--spacing-md);
 
 			h5 {
 				display: flex;
@@ -834,6 +921,9 @@
 			.cons :global(.icon) {
 				color: var(--color-error);
 			}
+			.best-for :global(.icon) {
+				color: var(--color-info);
+			}
 
 			ul {
 				margin: 0;
@@ -849,11 +939,8 @@
 		}
 
 		.best-for {
-			padding-top: var(--spacing-sm);
-			border-top: 1px solid var(--border-primary);
 			font-size: var(--font-size-sm);
 			color: var(--text-secondary);
-
 			strong {
 				color: var(--text-primary);
 			}
@@ -870,7 +957,6 @@
 		padding: var(--spacing-md);
 		background: var(--bg-primary);
 		border-radius: var(--radius-md);
-		border-left: 3px solid var(--color-info);
 
 		h4 {
 			display: flex;
@@ -879,10 +965,6 @@
 			margin: 0 0 var(--spacing-sm) 0;
 			color: var(--color-primary);
 			font-size: var(--font-size-md);
-
-			:global(.icon) {
-				color: var(--color-info);
-			}
 		}
 
 		p {
