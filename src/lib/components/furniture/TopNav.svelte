@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from '$app/stores';
-  import { TOP_NAV, SUB_NAV, isActive, type NavItem, type NavGroup } from '$lib/constants/nav';
+  import { TOP_NAV, SUB_NAV, isActive, type NavItem, type NavGroup, isGroupWithActiveItem, isGroupWithActiveSubDropdown } from '$lib/constants/nav';
   import Icon from '$lib/components/global/Icon.svelte';
   import { navbarDisplay } from '$lib/stores/navbarDisplay';
   import { bookmarks } from '$lib/stores/bookmarks';
@@ -133,7 +133,9 @@
     >
       <a
         href={item.href}
-        class="nav-link {isActive(currentPath, item.href) ? 'active' : ''}"
+        class="nav-link"
+        class:active={isActive(currentPath, item.href)}
+        class:dropdown-open={hasSubPages(item.href) && activeDropdown === item.href}
         aria-current={isActive(currentPath, item.href) ? 'page' : undefined}
         aria-expanded={activeDropdown === item.href}
         aria-haspopup={hasSubPages(item.href)}
@@ -182,6 +184,8 @@
                   <!-- Nav group with secondary dropdown -->
                   <div
                     class="nav-group"
+                    class:active={isGroupWithActiveItem(currentPath, subItem)}
+                    class:dropdown-open={isGroupWithActiveSubDropdown(activeSubDropdown, subItem)}
                     class:has-secondary={subItem.items.length > 0}
                     role="menuitem"
                     tabindex="0"
@@ -222,7 +226,8 @@
                   {#each subItem.items.filter((i) => i.label) as groupItem (groupItem.href)}
                     <a
                       href={groupItem.href}
-                      class="dropdown-link {isActive(currentPath, groupItem.href) ? 'active' : ''}"
+                      class="dropdown-link"
+                      class:active={isActive(currentPath, groupItem.href)}
                       aria-current={isActive(currentPath, groupItem.href) ? 'page' : undefined}
                     >
                       <div class="link-content">
@@ -296,7 +301,8 @@
       flex-shrink: 0;
     }
 
-    &:hover {
+    &:hover, 
+    &.dropdown-open {
       color: var(--text-primary);
       background: var(--surface-hover);
       .dropdown-icon {
@@ -325,6 +331,7 @@
     left: 0;
     z-index: 5;
     overflow: visible;
+    margin-top: var(--spacing-sm);
   }
 
   .primary-dropdown {
@@ -429,19 +436,46 @@
       padding-top: var(--spacing-xs);
       border-top: 1px solid var(--border-secondary);
     }
-
+  
+    &:has(+ .dropdown-link) {
+      margin-bottom: var(--spacing-xs);
+      padding-bottom: var(--spacing-xs);
+      border-bottom: 1px solid var(--border-secondary);
+    }
+    
+    &.has-secondary, 
+    &.active {     
+      .group-title {
+        padding: var(--spacing-sm) var(--spacing-md);
+        border-radius: var(--radius-md);
+      }
+    }
+    
     &.has-secondary {
       cursor: pointer;
-
+      
       .group-title {
-        border-radius: var(--radius-md);
         transition: background-color 0.15s ease;
-
+        
         &:hover {
           background: var(--surface-hover);
         }
       }
     }
+
+    &.dropdown-open {
+      .group-title {
+        transition: background-color none;
+        background: var(--surface-hover);
+      }
+    }
+
+    &.active {
+      .group-title {
+        color: var(--color-primary);
+        background: color-mix(in srgb, var(--color-primary), transparent 95%);
+      }
+    }    
   }
 
   .group-title {
