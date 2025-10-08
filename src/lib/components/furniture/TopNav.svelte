@@ -362,6 +362,9 @@
     max-height: 80vh;
     overflow-y: auto;
     overflow-x: visible;
+
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--color-primary), transparent 10%) transparent;
   }
 
   .dropdown-link {
@@ -513,6 +516,11 @@
     animation: secondary-enter 0.15s ease-out;
     pointer-events: auto;
     white-space: normal;
+
+    max-height: 80vh;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--color-primary), transparent 10%) transparent;
 
     // Smart positioning: try right first, auto-fallback to left
     left: calc(100% + 0.5rem);
