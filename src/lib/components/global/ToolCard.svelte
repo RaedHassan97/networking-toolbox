@@ -67,6 +67,7 @@
           on:click={toggleBookmark}
           aria-label={isBookmarked ? 'Remove bookmark' : 'Add bookmark'}
         >
+        <div class="bookmark-icon">
           {#if isBookmarked}
             {#if isHovered}
               <Icon name="bookmark-remove" size="sm" />
@@ -77,6 +78,7 @@
             <Icon name="bookmark-add" size="md" />
           {/if}
           <!-- <Icon name={isBookmarked ? 'bookmark-remove' : 'bookmark-add'} size="sm" /> -->
+        </div>
         </button>
       {/if}
     </div>
@@ -195,6 +197,7 @@
         background: var(--surface-hover);
         color: var(--color-success);
         transform: scale(1.15);
+        border-radius: 100%;
 
         &::before {
           width: 100%;
@@ -206,6 +209,12 @@
         transform: scale(0.95);
       }
 
+      & .bookmark-icon {
+        display: flex;
+        width: fit-content;
+        height: fit-content;
+      }
+      
       &.bookmarked {
         color: var(--text-secondary);
         opacity: 1;
