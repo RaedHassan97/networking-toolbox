@@ -1384,6 +1384,25 @@ export const SUB_NAV: Record<string, (NavItem | NavGroup)[]> = {
           icon: 'terminal',
           keywords: ['banner', 'service', 'ssh', 'smtp', 'ftp', 'http', 'telnet', 'fingerprinting', 'reconnaissance'],
         },
+        {
+          href: makePath('/diagnostics/tls/handshake-analyzer'),
+          label: 'TLS Handshake Analyzer',
+          description:
+            'Analyze TLS/SSL handshake timing breakdown with detailed phase information and certificate exchange',
+          icon: 'handshake',
+          keywords: [
+            'tls',
+            'handshake',
+            'analyzer',
+            'timing',
+            'performance',
+            'latency',
+            'ssl',
+            'certificate',
+            'cipher',
+            'negotiation',
+          ],
+        },
       ],
     },
     {
@@ -1429,7 +1448,7 @@ export const SUB_NAV: Record<string, (NavItem | NavGroup)[]> = {
           href: makePath('/diagnostics/network/asn-geo-lookup'),
           label: 'ASN & Geolocation Lookup',
           description: 'Look up IP address geolocation, ISP, and autonomous system information',
-          icon: 'map-pin',
+          icon: 'map',
           keywords: [
             'asn',
             'geolocation',
