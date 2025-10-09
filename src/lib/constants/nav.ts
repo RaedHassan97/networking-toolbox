@@ -1403,6 +1403,28 @@ export const SUB_NAV: Record<string, (NavItem | NavGroup)[]> = {
           icon: 'network-ping',
           keywords: ['http', 'ping', 'latency', 'response', 'time', 'statistics', 'median', 'p95', 'web', 'api'],
         },
+        {
+          href: makePath('/diagnostics/network/bgp-route-lookup'),
+          label: 'BGP Route Lookup',
+          description:
+            'Look up BGP routing information for IP addresses and prefixes, view AS paths, origin AS, and peering data',
+          icon: 'signpost',
+          keywords: [
+            'bgp',
+            'routing',
+            'as',
+            'asn',
+            'autonomous system',
+            'prefix',
+            'peer',
+            'origin',
+            'path',
+            'ripe',
+            'ris',
+            'route',
+            'internet routing',
+          ],
+        },
       ],
     },
     {
