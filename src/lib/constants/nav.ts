@@ -1949,6 +1949,16 @@ export function isActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(href + '/');
 }
 
+export function isGroupWithActiveItem(pathname: string, groupItem: NavGroup): boolean {
+  if (groupItem.items.length === 0) return false;
+  return groupItem.items.some((item) => isActive(pathname, item.href));
+}
+
+export function isGroupWithActiveSubDropdown(activeSubDropdown: string | null, groupItem: NavGroup): boolean {
+  if (groupItem.items.length === 0) return false;
+  return 'title' in groupItem && activeSubDropdown === groupItem.title;
+}
+
 // Helper function to extract all nav items from mixed structure
 function extractAllNavItems(navStructure: (NavItem | NavGroup)[]): NavItem[] {
   const items: NavItem[] = [];
