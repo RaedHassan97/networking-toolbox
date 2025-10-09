@@ -1445,6 +1445,23 @@ export const SUB_NAV: Record<string, (NavItem | NavGroup)[]> = {
           ],
         },
         {
+          href: makePath('/diagnostics/network/ipv6-connectivity-checker'),
+          label: 'IPv6 Connectivity Checker',
+          description: 'Test IPv6 and IPv4 connectivity to determine dual-stack capability and protocol preference',
+          icon: 'ipv6-check',
+          keywords: [
+            'ipv6',
+            'ipv4',
+            'connectivity',
+            'dual-stack',
+            'protocol',
+            'test',
+            'network',
+            'internet',
+            'address',
+          ],
+        },
+        {
           href: makePath('/diagnostics/network/asn-geo-lookup'),
           label: 'ASN & Geolocation Lookup',
           description: 'Look up IP address geolocation, ISP, and autonomous system information',
