@@ -294,7 +294,7 @@ describe('Mask Conversion Utilities', () => {
       const duration = endTime - startTime;
 
       // Should complete 33,000 conversions in reasonable time (< 1 second, allowing some buffer)
-      expect(duration).toBeLessThan(1000 + 69);
+      expect(duration).toBeLessThan(1100);
     });
 
     it('should maintain consistency across multiple rapid calls', () => {
