@@ -25,7 +25,7 @@
     {#each zoneTools as tool (tool.href)}
       <a href={tool.href} class="tool-card">
         <div class="tool-icon">
-          <Icon name="file-text" size="lg" />
+          <Icon name="file" size="lg" />
         </div>
         <div class="tool-info">
           <h3>{tool.label}</h3>

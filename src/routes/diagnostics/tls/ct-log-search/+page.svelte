@@ -260,7 +260,7 @@
         <!-- Statistics Overview -->
         <div class="status-overview">
           <div class="status-item info">
-            <Icon name="text-file" size="md" />
+            <Icon name="file" size="md" />
             <div>
               <h4>{results.totalCertificates} Total Certificates</h4>
               <p>Found in Certificate Transparency logs</p>
@@ -332,7 +332,7 @@
         <!-- Certificates List -->
         <div class="subsection">
           <h4>
-            <Icon name="file-text" size="sm" />
+            <Icon name="file" size="sm" />
             Certificates ({results.certificates.length})
           </h4>
           <div class="cert-list">

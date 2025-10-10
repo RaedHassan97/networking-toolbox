@@ -176,7 +176,7 @@
         </div>
       </div>
       <div class="overview-item">
-        <Icon name="list-checks" size="sm" />
+        <Icon name="list-check" size="sm" />
         <div>
           <strong>Gap Analysis:</strong> Identify missing PTRs, extra PTRs, and generate remediation plans.
         </div>
