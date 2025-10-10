@@ -61,19 +61,27 @@
       class: 'manufacturer-item',
       valueClass: (c: MACConversionResult) => (!c.oui.found ? 'unknown' : ''),
     },
-    { key: 'country', label: 'Country', icon: 'globe', render: (c: MACConversionResult) => c.oui.country },
+    {
+      key: 'country',
+      label: 'Country',
+      icon: 'globe',
+      render: (c: MACConversionResult) => c.oui.country || 'N/A',
+      condition: (c: MACConversionResult) => !!c.oui.country,
+    },
     {
       key: 'blockType',
       label: 'Block Type',
       icon: 'layers',
-      render: (c: MACConversionResult) => c.oui.blockType,
-      tooltip: (c: MACConversionResult) => getBlockTypeTooltip(c.oui.blockType!),
+      render: (c: MACConversionResult) => c.oui.blockType || 'N/A',
+      tooltip: (c: MACConversionResult) => (c.oui.blockType ? getBlockTypeTooltip(c.oui.blockType) : ''),
+      condition: (c: MACConversionResult) => !!c.oui.blockType,
     },
     {
       key: 'blockSize',
       label: 'Block Size',
       icon: 'database',
-      render: (c: MACConversionResult) => `${c.oui.blockSize!.toLocaleString()} addresses`,
+      render: (c: MACConversionResult) => (c.oui.blockSize ? `${c.oui.blockSize.toLocaleString()} addresses` : 'N/A'),
+      condition: (c: MACConversionResult) => c.oui.blockSize != null,
     },
     {
       key: 'blockRange',
@@ -88,19 +96,22 @@
       label: 'Registry Status',
       icon: 'shield',
       render: (c: MACConversionResult) => (c.oui.isPrivate ? 'Private' : 'Public'),
+      condition: (c: MACConversionResult) => c.oui.isPrivate != null,
     },
     {
       key: 'updated',
       label: 'Last Updated',
       icon: 'clock',
-      render: (c: MACConversionResult) => new Date(c.oui.updated!).toLocaleDateString(),
+      render: (c: MACConversionResult) => (c.oui.updated ? new Date(c.oui.updated).toLocaleDateString() : 'N/A'),
+      condition: (c: MACConversionResult) => !!c.oui.updated,
     },
     {
       key: 'address',
       label: 'Address',
       icon: 'map-pin',
-      render: (c: MACConversionResult) => c.oui.address,
+      render: (c: MACConversionResult) => c.oui.address || 'N/A',
       class: 'address-item',
+      condition: (c: MACConversionResult) => !!c.oui.address,
     },
   ];
 
@@ -632,15 +643,6 @@
 </div>
 
 <style lang="scss">
-  .card {
-    max-width: 90rem;
-    margin: 0 auto;
-    padding: var(--spacing-xl);
-    background: var(--bg-secondary);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-sm);
-  }
-
   .card-header {
     margin-bottom: var(--spacing-xl);
 
@@ -660,7 +662,6 @@
 
   .examples-card {
     margin-bottom: var(--spacing-md);
-    background: var(--bg-secondary);
     border: 1px solid var(--border-color);
 
     .examples-details {
@@ -715,21 +716,14 @@
       flex-direction: column;
       gap: var(--spacing-xs);
       padding: var(--spacing-md);
-      background: var(--bg-primary);
-      border: 1px solid var(--border-color);
       border-radius: var(--radius-md);
       cursor: pointer;
       transition: all var(--transition-fast);
       text-align: left;
 
-      &:hover {
-        border-color: var(--color-primary);
-        background: color-mix(in srgb, var(--color-primary), transparent 97%);
-      }
-
       &.selected {
+        background: var(--bg-primary);
         border-color: var(--color-primary);
-        background: color-mix(in srgb, var(--color-primary), transparent 95%);
       }
 
       h5 {
