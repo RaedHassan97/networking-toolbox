@@ -1,7 +1,7 @@
 import { writable } from 'svelte/store';
 import { browser } from '$app/environment';
 
-export type HomepageLayoutMode = 'default' | 'minimal' | 'carousel' | 'categories' | 'bookmarks' | 'small-icons';
+export type HomepageLayoutMode = 'default' | 'minimal' | 'carousel' | 'categories' | 'bookmarks' | 'small-icons' | 'list';
 
 export interface HomepageLayoutOption {
   id: HomepageLayoutMode;
@@ -19,15 +19,25 @@ export const homepageLayoutOptions: HomepageLayoutOption[] = [
     description: 'Organized by tool categories with flexible grid layout',
   },
   {
+    id: 'default',
+    name: 'Tiles',
+    description: 'Full homepage with all sections and features',
+  },
+  {
+    id: 'list',
+    name: 'List',
+    description: 'Hierarchical tree view of all tools and pages',
+  },
+  {
     id: 'bookmarks',
     name: 'Bookmarks',
     description: 'Show only your bookmarked tools',
   },
-  {
-    id: 'minimal',
-    name: 'Minimal',
-    description: 'Clean, simplified homepage layout',
-  },
+  // {
+  //   id: 'minimal',
+  //   name: 'Tiles',
+  //   description: 'Clean, simplified homepage layout',
+  // },
   {
     id: 'carousel',
     name: 'Carousel',
@@ -37,11 +47,6 @@ export const homepageLayoutOptions: HomepageLayoutOption[] = [
     id: 'small-icons',
     name: 'Small Icons',
     description: 'Compact grid of tool icons only',
-  },
-  {
-    id: 'default',
-    name: 'Legacy',
-    description: 'Full homepage with all sections and features',
   },
 ];
 

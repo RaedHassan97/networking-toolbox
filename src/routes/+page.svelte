@@ -9,6 +9,7 @@
   import HomepageCarousel from '$lib/components/home/HomepageCarousel.svelte';
   import HomepageBookmarks from '$lib/components/home/HomepageBookmarks.svelte';
   import HomepageSmallIcons from '$lib/components/home/HomepageSmallIcons.svelte';
+  import SiteMapList from '$lib/components/home/SiteMapList.svelte';
 
   // Helper function to extract nav items from mixed structure
   function extractNavItems(items: (NavItem | NavGroup)[]): NavItem[] {
@@ -47,6 +48,8 @@
   <HomepageBookmarks />
 {:else if $currentLayout === 'small-icons'}
   <HomepageSmallIcons />
+{:else if $currentLayout === 'list'}
+  <SiteMapList homeMode={true} />
 {:else}
   <HomepageDefault {toolPages} {referencePages} />
 {/if}

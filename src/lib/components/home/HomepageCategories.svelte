@@ -110,6 +110,7 @@
 <!-- Minimal Hero -->
 <section class="hero-categories">
   <h1>{site.title}</h1>
+  <p class="hero-text">{site.heroDescription}</p>
 </section>
 
 <!-- Search Filter -->
@@ -205,14 +206,25 @@
     padding: var(--spacing-lg) 0 var(--spacing-md);
 
     h1 {
-      font-size: var(--font-size-2xl);
-      font-weight: 600;
+      font-size: var(--font-size-3xl);
+      font-weight: 700;
       color: var(--text-primary);
-      margin: 0;
-      line-height: 1.3;
+      margin: 0 0 var(--spacing-sm);
+      line-height: 1.2;
 
       @media (max-width: 768px) {
-        font-size: var(--font-size-xl);
+        font-size: var(--font-size-2xl);
+      }
+    }
+
+    .hero-text {
+      font-size: var(--font-size-lg);
+      color: var(--text-secondary);
+      margin: 0;
+      line-height: 1.5;
+
+      @media (max-width: 768px) {
+        font-size: var(--font-size-md);
       }
     }
   }
