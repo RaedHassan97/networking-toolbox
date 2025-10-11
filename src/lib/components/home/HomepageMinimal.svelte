@@ -12,8 +12,7 @@
 
   let { toolPages, referencePages }: Props = $props();
 
-  const allPages = $derived([...toolPages, ...referencePages]);
-  const search = useToolSearch(allPages);
+  const search = useToolSearch(() => [...toolPages, ...referencePages]);
 </script>
 
 <!-- Minimal Hero Section -->

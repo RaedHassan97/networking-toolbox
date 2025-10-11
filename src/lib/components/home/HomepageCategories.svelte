@@ -350,7 +350,7 @@
       color: var(--text-tertiary);
       background: var(--bg-tertiary);
       padding: var(--spacing-xs) var(--spacing-sm);
-      border-radius: var(--radius-full);
+      border-radius: var(--radius-sm);
       font-weight: 500;
     }
 
