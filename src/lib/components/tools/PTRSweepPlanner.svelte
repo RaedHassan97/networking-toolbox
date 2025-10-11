@@ -176,7 +176,7 @@
         </div>
       </div>
       <div class="overview-item">
-        <Icon name="list-checks" size="sm" />
+        <Icon name="list-check" size="sm" />
         <div>
           <strong>Gap Analysis:</strong> Identify missing PTRs, extra PTRs, and generate remediation plans.
         </div>
@@ -447,7 +447,7 @@
               {#if namingPattern.trim() && results.analysis.patternMatches < results.analysis.totalAddresses - results.analysis.missingPTRs.length}
                 <div class="action-item">
                   <div class="action-header">
-                    <Icon name="edit-3" size="sm" />
+                    <Icon name="edit" size="sm" />
                     <span>Fix Naming Pattern Violations</span>
                   </div>
                   <div class="action-description">

@@ -1,7 +1,7 @@
 {
 	"name": "networking-toolbox",
 	"private": true,
-	"version": "1.0.1",
+	"version": "1.1.0",
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
@@ -16,7 +16,7 @@
 		"build:node": "DEPLOY_ENV='node' npm run build",
 		"build:static": "DEPLOY_ENV='static' npm run build",
 		"test": "vitest",
-		"test:coverage": "vitest --coverage",
+		"test:coverage": "vitest run --coverage",
 		"test:api": "vitest run --config tests/vitest.api.config.ts",
 		"test:e2e": "playwright test"
 	},

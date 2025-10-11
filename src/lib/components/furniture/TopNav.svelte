@@ -1,6 +1,14 @@
 <script lang="ts">
   import { page } from '$app/stores';
-  import { TOP_NAV, SUB_NAV, isActive, type NavItem, type NavGroup, isGroupWithActiveItem, isGroupWithActiveSubDropdown } from '$lib/constants/nav';
+  import {
+    TOP_NAV,
+    SUB_NAV,
+    isActive,
+    type NavItem,
+    type NavGroup,
+    isGroupWithActiveItem,
+    isGroupWithActiveSubDropdown,
+  } from '$lib/constants/nav';
   import Icon from '$lib/components/global/Icon.svelte';
   import { navbarDisplay } from '$lib/stores/navbarDisplay';
   import { bookmarks } from '$lib/stores/bookmarks';
@@ -301,7 +309,7 @@
       flex-shrink: 0;
     }
 
-    &:hover, 
+    &:hover,
     &.dropdown-open {
       color: var(--text-primary);
       background: var(--surface-hover);
@@ -439,27 +447,27 @@
       padding-top: var(--spacing-xs);
       border-top: 1px solid var(--border-secondary);
     }
-  
+
     &:has(+ .dropdown-link) {
       margin-bottom: var(--spacing-xs);
       padding-bottom: var(--spacing-xs);
       border-bottom: 1px solid var(--border-secondary);
     }
-    
-    &.has-secondary, 
-    &.active {     
+
+    &.has-secondary,
+    &.active {
       .group-title {
         padding: var(--spacing-sm) var(--spacing-md);
         border-radius: var(--radius-md);
       }
     }
-    
+
     &.has-secondary {
       cursor: pointer;
-      
+
       .group-title {
         transition: background-color 0.15s ease;
-        
+
         &:hover {
           background: var(--surface-hover);
         }
@@ -478,7 +486,7 @@
         color: var(--color-primary);
         background: color-mix(in srgb, var(--color-primary), transparent 95%);
       }
-    }    
+    }
   }
 
   .group-title {

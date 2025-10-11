@@ -267,7 +267,7 @@
         for="ipv6-input"
         use:tooltip={'Enter a valid IPv6 unicast address (not multicast) to calculate its solicited-node multicast address'}
       >
-        <Icon name="globe-2" size="sm" />
+        <Icon name="globe" size="sm" />
         IPv6 Unicast Address
       </label>
       <input
@@ -298,7 +298,7 @@
         <div class="result-main">
           <div class="result-item">
             <div class="result-label">
-              <Icon name="globe-2" size="sm" />
+              <Icon name="globe" size="sm" />
               Unicast Address
             </div>
             <div class="result-content">
