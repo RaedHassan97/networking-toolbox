@@ -2,7 +2,6 @@ import { json } from '@sveltejs/kit';
 
 export async function GET() {
   try {
-    // @ts-expect-error - fs is available in Node.js server context
     const { readFileSync } = await import('fs');
     const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
     return json({

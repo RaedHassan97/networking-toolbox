@@ -1,6 +1,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { promises as dns } from 'node:dns';
+import type { MxRecord, SoaRecord } from 'node:dns';
 
 interface DNSPerformanceRequest {
   domain: string;
@@ -106,8 +107,8 @@ async function queryResolver(
       records = await withTimeout(resolver.resolve6(domain), timeoutMs);
       break;
     case 'MX': {
-      const mxRecords = (await withTimeout(resolver.resolveMx(domain), timeoutMs)) as dns.MxRecord[];
-      records = mxRecords.map((r: dns.MxRecord) => `${r.priority} ${r.exchange}`);
+      const mxRecords = (await withTimeout(resolver.resolveMx(domain), timeoutMs)) as MxRecord[];
+      records = mxRecords.map((r: MxRecord) => `${r.priority} ${r.exchange}`);
       break;
     }
     case 'TXT': {
@@ -122,7 +123,7 @@ async function queryResolver(
       records = await withTimeout(resolver.resolveCname(domain), timeoutMs);
       break;
     case 'SOA': {
-      const soaRecord = (await withTimeout(resolver.resolveSoa(domain), timeoutMs)) as dns.SoaRecord;
+      const soaRecord = (await withTimeout(resolver.resolveSoa(domain), timeoutMs)) as SoaRecord;
       records = [
         `${soaRecord.nsname} ${soaRecord.hostmaster} ${soaRecord.serial} ${soaRecord.refresh} ${soaRecord.retry} ${soaRecord.expire} ${soaRecord.minttl}`,
       ];

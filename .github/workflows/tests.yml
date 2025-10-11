@@ -24,6 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       NODE_OPTIONS: "--max_old_space_size=8192"
+      ENABLE_CODECOV: ${{ secrets.CODECOV_TOKEN != '' }}
 
     steps:
       - uses: actions/checkout@v4
@@ -63,6 +64,16 @@ jobs:
           name: unit-test-results
           path: test-results.xml
 
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() && env.ENABLE_CODECOV == 'true' }}
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: test-results.xml
+          flags: unittests
+          name: unit-tests
+        continue-on-error: true
+
       - name: Upload coverage to Codecov
         if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || env.IS_PR == 'true'
         uses: codecov/codecov-action@v4
@@ -90,6 +101,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       NODE_OPTIONS: "--max_old_space_size=8192"
+      ENABLE_CODECOV: ${{ secrets.CODECOV_TOKEN != '' }}
 
     steps:
       - uses: actions/checkout@v4
@@ -135,6 +147,16 @@ jobs:
           name: api-test-results
           path: api-test-results.xml
 
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() && env.ENABLE_CODECOV == 'true' }}
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: api-test-results.xml
+          flags: api-tests
+          name: api-contract-tests
+        continue-on-error: true
+
       - name: Fail if tests failed
         if: steps.test.outcome == 'failure'
         run: exit 1
@@ -144,6 +166,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       NODE_OPTIONS: "--max_old_space_size=8192"
+      ENABLE_CODECOV: ${{ secrets.CODECOV_TOKEN != '' }}
 
     steps:
       - uses: actions/checkout@v4
@@ -194,6 +217,16 @@ jobs:
         with:
           name: e2e-test-results
           path: e2e-results.xml
+
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() && env.ENABLE_CODECOV == 'true' }}
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: e2e-results.xml
+          flags: e2e-tests
+          name: e2e-tests
+        continue-on-error: true
 
       - name: Upload e2e artifacts
         if: always() && steps.test.outcome != 'success'

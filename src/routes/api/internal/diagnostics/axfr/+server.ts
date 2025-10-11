@@ -1,10 +1,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-// @ts-expect-error - Node.js core modules work at runtime
 import { exec } from 'child_process';
-// @ts-expect-error - Node.js core modules work at runtime
 import { promisify } from 'util';
-// @ts-expect-error - Node.js core modules work at runtime
 import { promises as dns } from 'dns';
 
 export const config = { runtime: 'nodejs22.x' };
