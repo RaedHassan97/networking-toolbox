@@ -55,7 +55,7 @@
       <div class="track" style="animation-duration: {durationFor(row.items.length)}s;">
         {#each dupe(row.items).map((t, idx) => ({ t, idx })) as it (it.t.href + '-' + it.idx)}
           <div class="card-wrap">
-            <ToolCard tool={it.t} small={true} />
+            <ToolCard tool={it.t} size="small" />
           </div>
         {/each}
       </div>
