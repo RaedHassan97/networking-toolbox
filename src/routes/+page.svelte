@@ -7,6 +7,7 @@
   import HomepageMinimal from '$lib/components/home/HomepageMinimal.svelte';
   import HomepageCategories from '$lib/components/home/HomepageCategories.svelte';
   import HomepageCarousel from '$lib/components/home/HomepageCarousel.svelte';
+  import HomepageBookmarks from '$lib/components/home/HomepageBookmarks.svelte';
 
   // Helper function to extract nav items from mixed structure
   function extractNavItems(items: (NavItem | NavGroup)[]): NavItem[] {
@@ -41,6 +42,8 @@
   <HomepageCategories {toolPages} {referencePages} />
 {:else if $currentLayout === 'carousel'}
   <HomepageCarousel />
+{:else if $currentLayout === 'bookmarks'}
+  <HomepageBookmarks {toolPages} {referencePages} />
 {:else}
   <HomepageDefault {toolPages} {referencePages} />
 {/if}

@@ -228,6 +228,7 @@
     flex-direction: column;
     gap: var(--spacing-md);
     background: var(--bg-tertiary);
+    background: radial-gradient(var(--bg-tertiary), color-mix(in srgb, var(--bg-tertiary), var(--bg-primary) 25%));
     padding: var(--spacing-md);
     border-radius: var(--radius-md);
     border: 1px solid var(--border-primary);
