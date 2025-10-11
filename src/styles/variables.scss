@@ -71,6 +71,31 @@
   --transition-fast: 0.15s ease;
   --transition-normal: 0.2s ease;
   --transition-slow: 0.3s ease;
+
+  /* Animation durations */
+  --anim-duration-fast: 0.3s;
+  --anim-duration-normal: 0.5s;
+  --anim-duration-slow: 0.8s;
+}
+
+/* Respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --transition-fast: 0.01s ease;
+    --transition-normal: 0.01s ease;
+    --transition-slow: 0.01s ease;
+    --anim-duration-fast: 0.01s;
+    --anim-duration-normal: 0.01s;
+    --anim-duration-slow: 0.01s;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01s !important;
+  }
 }
 
 .theme-ocean,

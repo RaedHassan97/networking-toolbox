@@ -1,11 +1,12 @@
 <script lang="ts">
   import { site } from '$lib/constants/site';
-  import { TOP_NAV, SUB_NAV, type NavItem, type NavGroup } from '$lib/constants/nav';
+  import { TOP_NAV, SUB_NAV, type NavItem } from '$lib/constants/nav';
   import ToolsGrid from '$lib/components/global/ToolsGrid.svelte';
   import SearchFilter from '$lib/components/furniture/SearchFilter.svelte';
   import { bookmarks } from '$lib/stores/bookmarks';
   import { frequentlyUsedTools, recentlyUsedTools } from '$lib/stores/toolUsage';
   import Icon from '$lib/components/global/Icon.svelte';
+  import { extractNavItems } from '$lib/utils/nav';
 
   interface Props {
     toolPages: NavItem[];
@@ -13,19 +14,6 @@
   }
 
   let { toolPages, referencePages }: Props = $props();
-
-  // Helper to extract nav items from mixed structure
-  function extractNavItems(items: (NavItem | NavGroup)[]): NavItem[] {
-    const navItems: NavItem[] = [];
-    for (const item of items) {
-      if ('href' in item) {
-        navItems.push(item);
-      } else if ('title' in item && 'items' in item) {
-        navItems.push(...item.items);
-      }
-    }
-    return navItems;
-  }
 
   // Category configuration - easily extensible for future customization
   interface CategorySection {
@@ -107,10 +95,13 @@
   });
 </script>
 
-<!-- Minimal Hero -->
+<!-- Hero -->
 <section class="hero-categories">
-  <h1>{site.title}</h1>
-  <p class="hero-text">{site.heroDescription}</p>
+  <div class="hero-bg"></div>
+  <div class="hero-content">
+    <h1>{site.title}</h1>
+    <p class="hero-text">{site.heroDescription}</p>
+  </div>
 </section>
 
 <!-- Search Filter -->
@@ -202,15 +193,39 @@
 
 <style lang="scss">
   .hero-categories {
+    position: relative;
     text-align: center;
-    padding: var(--spacing-lg) 0 var(--spacing-md);
+    padding: var(--spacing-2xl) var(--spacing-md) var(--spacing-xl);
+    margin-bottom: var(--spacing-lg);
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        ellipse at center,
+        color-mix(in srgb, var(--color-primary), transparent 94%),
+        transparent 60%
+      );
+      animation:
+        bgFadeIn 1s ease-out,
+        bgPulse 8s ease-in-out 1s infinite;
+      z-index: 0;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      animation: heroFadeIn 0.8s ease-out;
+    }
 
     h1 {
       font-size: var(--font-size-3xl);
       font-weight: 700;
-      color: var(--text-primary);
       margin: 0 0 var(--spacing-sm);
       line-height: 1.2;
+      animation: heroFadeIn 0.8s ease-out 0.1s both;
 
       @media (max-width: 768px) {
         font-size: var(--font-size-2xl);
@@ -222,10 +237,41 @@
       color: var(--text-secondary);
       margin: 0;
       line-height: 1.5;
+      animation: heroFadeIn 0.8s ease-out 0.2s both;
 
       @media (max-width: 768px) {
         font-size: var(--font-size-md);
       }
+    }
+  }
+
+  @keyframes bgFadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes bgPulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.8;
+    }
+  }
+
+  @keyframes heroFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
     }
   }
 
@@ -240,7 +286,10 @@
     flex-direction: column;
     gap: var(--spacing-md);
     background: var(--bg-tertiary);
-    background: radial-gradient(var(--bg-tertiary), color-mix(in srgb, var(--bg-tertiary), var(--bg-primary) 25%));
+    background: radial-gradient(
+      color-mix(in srgb, var(--bg-tertiary), transparent 30%),
+      color-mix(in srgb, var(--bg-tertiary), var(--bg-primary) 60%)
+    );
     padding: var(--spacing-md);
     border-radius: var(--radius-md);
     border: 1px solid var(--border-primary);
@@ -248,6 +297,7 @@
     break-inside: avoid;
     page-break-inside: avoid;
     max-height: 36rem;
+    height: 100%;
     overflow-y: auto;
     animation: slideInFade 0.3s ease-out;
 
@@ -284,8 +334,8 @@
     display: flex;
     align-items: center;
     gap: var(--spacing-sm);
-    padding-bottom: var(--spacing-sm);
-    border-bottom: 1px solid var(--border-secondary);
+    // padding-bottom: var(--spacing-sm);
+    // border-bottom: 1px solid var(--border-secondary);
 
     h2 {
       font-size: var(--font-size-lg);
@@ -311,8 +361,14 @@
   }
 
   // Full width sections
-  .bookmarks-section,
   .full-width {
+    grid-column: 1 / -1;
+  }
+
+  .bookmarks-section {
+    background: none;
+    border: none;
+    box-shadow: none;
     grid-column: 1 / -1;
   }
 
@@ -326,8 +382,8 @@
       grid-template-columns: 2fr 1fr;
     }
 
-    @media (max-width: 1024px) {
-      grid-template-columns: 1fr;
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr !important;
     }
   }
 

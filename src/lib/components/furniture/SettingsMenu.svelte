@@ -221,28 +221,9 @@
             >
               {lang.flag}
               {lang.name}
-              {!lang.available ? ' (Soon)' : ''}
             </button>
           {/each}
         </div>
-      </div>
-
-      <!-- Navbar Display -->
-      <div class="settings-section">
-        <h3>Top Navigation</h3>
-        <div class="navbar-select-wrapper">
-          <select class="navbar-select" value={$currentNavbarDisplay} onchange={handleNavbarDisplayChange}>
-            {#each navbarDisplayOptions as option (option.id)}
-              <option value={option.id}>{option.name}</option>
-            {/each}
-          </select>
-          <div class="dropdown-icon">
-            <Icon name="chevron-down" size="xs" />
-          </div>
-        </div>
-        <small class="navbar-description">
-          {navbarDisplayOptions.find((opt) => opt.id === $currentNavbarDisplay)?.description}
-        </small>
       </div>
 
       <!-- Homepage Layout -->
@@ -260,6 +241,24 @@
         </div>
         <small class="navbar-description">
           {homepageLayoutOptions.find((opt) => opt.id === $currentHomepageLayout)?.description}
+        </small>
+      </div>
+
+      <!-- Navbar Display -->
+      <div class="settings-section">
+        <h3>Top Navigation</h3>
+        <div class="navbar-select-wrapper">
+          <select class="navbar-select" value={$currentNavbarDisplay} onchange={handleNavbarDisplayChange}>
+            {#each navbarDisplayOptions as option (option.id)}
+              <option value={option.id}>{option.name}</option>
+            {/each}
+          </select>
+          <div class="dropdown-icon">
+            <Icon name="chevron-down" size="xs" />
+          </div>
+        </div>
+        <small class="navbar-description">
+          {navbarDisplayOptions.find((opt) => opt.id === $currentNavbarDisplay)?.description}
         </small>
       </div>
 
@@ -371,7 +370,7 @@
 
   .settings-section {
     &:not(:last-child) {
-      margin-bottom: var(--spacing-lg);
+      margin-bottom: var(--spacing-md);
       padding-bottom: var(--spacing-md);
       border-bottom: 1px solid var(--border-primary);
     }
@@ -466,9 +465,9 @@
   }
 
   .language-dropdown {
-    display: flex;
-    flex-direction: column;
     gap: var(--spacing-xs);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
   }
 
   .language-option {
@@ -573,6 +572,7 @@
     line-height: 1.3;
     margin-top: var(--spacing-xs);
     display: block;
+    display: none;
   }
 
   .accessibility-options {

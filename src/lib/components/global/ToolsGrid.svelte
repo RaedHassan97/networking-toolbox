@@ -35,5 +35,8 @@
     grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--min-col-width, 280px)), 1fr));
     gap: var(--spacing-md);
     margin-bottom: var(--spacing-xl);
+    &.compact {
+      gap: calc(var(--spacing-md) - 0.25rem);
+    }
   }
 </style>

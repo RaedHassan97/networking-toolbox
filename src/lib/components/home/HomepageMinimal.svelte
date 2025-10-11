@@ -3,6 +3,7 @@
   import type { NavItem } from '$lib/constants/nav';
   import ToolsGrid from '$lib/components/global/ToolsGrid.svelte';
   import SearchFilter from '$lib/components/furniture/SearchFilter.svelte';
+  import { useToolSearch } from '$lib/composables/useToolSearch.svelte';
 
   interface Props {
     toolPages: NavItem[];
@@ -11,24 +12,8 @@
 
   let { toolPages, referencePages }: Props = $props();
 
-  let filteredTools: NavItem[] = $state([...toolPages, ...referencePages]);
-  let searchQuery: string = $state('');
-
-  // Update filtered items when search changes
-  $effect(() => {
-    const allPages = [...toolPages, ...referencePages];
-    if (searchQuery.trim() === '') {
-      filteredTools = allPages;
-    } else {
-      const query = searchQuery.toLowerCase().trim();
-      filteredTools = allPages.filter(
-        (tool) =>
-          tool.label.toLowerCase().includes(query) ||
-          tool.description?.toLowerCase().includes(query) ||
-          tool.keywords?.some((keyword) => keyword.toLowerCase().includes(query)),
-      );
-    }
-  });
+  const allPages = $derived([...toolPages, ...referencePages]);
+  const search = useToolSearch(allPages);
 </script>
 
 <!-- Minimal Hero Section -->
@@ -37,10 +22,10 @@
 </section>
 
 <!-- Search Filter -->
-<SearchFilter bind:filteredTools bind:searchQuery />
+<SearchFilter bind:filteredTools={search.filtered} bind:searchQuery={search.query} />
 
 <!-- Compact Tools Grid -->
-<ToolsGrid idPrefix="minimal" tools={filteredTools} {searchQuery} />
+<ToolsGrid idPrefix="minimal" tools={search.filtered} searchQuery={search.query} />
 
 <style lang="scss">
   .hero-minimal {

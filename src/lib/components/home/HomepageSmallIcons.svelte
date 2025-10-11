@@ -19,12 +19,19 @@
 
   let gridElement: HTMLDivElement;
   let iconHues: number[] = $state([]);
+  let gridCols: number = $state(1);
+
+  // Memoized function to get grid column count
+  function updateGridCols() {
+    if (!gridElement) return;
+    const gridStyle = window.getComputedStyle(gridElement);
+    gridCols = gridStyle.gridTemplateColumns.split(' ').length;
+  }
 
   function updateIconColors() {
     if (!gridElement) return;
 
-    const gridStyle = window.getComputedStyle(gridElement);
-    const gridCols = gridStyle.gridTemplateColumns.split(' ').length;
+    updateGridCols();
 
     iconHues = toolPages.map((_, index) => {
       const row = Math.floor(index / gridCols);
@@ -32,6 +39,13 @@
       const diagonalIndex = row + col;
       return (diagonalIndex * HUE_STEP) % 360;
     });
+  }
+
+  function getAnimDelay(index: number): number {
+    if (!gridElement || gridCols === 0) return 0;
+    const row = Math.floor(index / gridCols);
+    const col = index % gridCols;
+    return (row + col) * 0.03; // 30ms per diagonal step
   }
 
   onMount(() => {
@@ -64,10 +78,11 @@
         recentTools: $recentlyUsedTools,
       })}
       {@const hue = iconHues[index] ?? 0}
+      {@const animDelay = getAnimDelay(index)}
       <a
         href={tool.href}
         class="icon-link"
-        style="--icon-hue: {hue}; --icon-color: hsl({hue}, {SATURATION}%, {LIGHTNESS}%);"
+        style="--icon-hue: {hue}; --icon-color: hsl({hue}, {SATURATION}%, {LIGHTNESS}%); --anim-delay: {animDelay}s;"
         use:tooltip={tool.label}
         oncontextmenu={(e) => handleToolContextMenu(e, tool)}
       >
@@ -153,6 +168,8 @@
     cursor: pointer;
     position: relative;
     overflow: hidden;
+    opacity: 0;
+    animation: iconFadeIn 0.5s ease-out var(--anim-delay, 0s) forwards;
     transition:
       transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
       box-shadow 0.3s ease,
@@ -205,6 +222,17 @@
 
     &:active {
       transform: scale(1.08) translateY(-1px) rotate(1deg);
+    }
+  }
+
+  @keyframes iconFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
     }
   }
 </style>

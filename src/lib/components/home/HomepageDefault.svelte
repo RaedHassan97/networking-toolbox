@@ -20,6 +20,9 @@
   let filteredReference: NavItem[] = $state(referencePages);
   let searchQuery: string = $state('');
 
+  // Combined filtered list
+  let allFiltered = $derived([...filteredTools, ...filteredReference]);
+
   // Update filtered items when search changes
   $effect(() => {
     if (searchQuery.trim() === '') {
@@ -53,7 +56,7 @@
 </section>
 
 <!-- Search Filter -->
-<SearchFilter bind:filteredTools bind:searchQuery />
+<SearchFilter bind:filteredTools={allFiltered} bind:searchQuery />
 
 {#if searchQuery.trim() === ''}
   <!-- Bookmarks Section -->
@@ -88,7 +91,7 @@
   {/if}
 {:else}
   <!-- Combined Search Results -->
-  <ToolsGrid idPrefix="search" tools={[...filteredTools, ...filteredReference]} {searchQuery} />
+  <ToolsGrid idPrefix="search" tools={allFiltered} {searchQuery} />
 {/if}
 
 <style lang="scss">

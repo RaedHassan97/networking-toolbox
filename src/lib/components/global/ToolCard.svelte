@@ -463,7 +463,7 @@
 
     h3 {
       font-size: var(--font-size-sm);
-      font-weight: 500;
+      font-weight: normal;
       margin: 0;
       line-height: 1.2;
       text-overflow: ellipsis;
@@ -480,6 +480,7 @@
       height: 1.75rem;
       transition: all 0.25s;
       filter: saturate(0.9);
+      padding: var(--spacing-md);
     }
 
     &:hover {

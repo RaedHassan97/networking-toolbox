@@ -1,7 +1,16 @@
 import { writable } from 'svelte/store';
 import { browser } from '$app/environment';
 
-export type HomepageLayoutMode = 'default' | 'minimal' | 'carousel' | 'categories' | 'bookmarks' | 'small-icons' | 'list';
+export type HomepageLayoutMode =
+  | 'default'
+  | 'minimal'
+  | 'carousel'
+  | 'categories'
+  | 'bookmarks'
+  | 'small-icons'
+  | 'list'
+  | 'search'
+  | 'empty';
 
 export interface HomepageLayoutOption {
   id: HomepageLayoutMode;
@@ -29,9 +38,19 @@ export const homepageLayoutOptions: HomepageLayoutOption[] = [
     description: 'Hierarchical tree view of all tools and pages',
   },
   {
+    id: 'empty',
+    name: 'Noting',
+    description: 'Show nothing',
+  },
+  {
     id: 'bookmarks',
     name: 'Bookmarks',
     description: 'Show only your bookmarked tools',
+  },
+  {
+    id: 'search',
+    name: 'Search',
+    description: 'Search-focused layout with instant tool discovery',
   },
   // {
   //   id: 'minimal',
