@@ -202,10 +202,13 @@ describe('DNS Performance API', () => {
 				const minTime = Math.min(...successfulResults.map((r: any) => r.responseTime));
 				expect(data.statistics.fastest.time).toBe(minTime);
 
-				const fastestResult = successfulResults.find(
+				// Verify the fastest resolver is one of the resolvers with minimum time
+				// (handles cases where multiple resolvers have the same response time)
+				const resolversWithMinTime = successfulResults.filter(
 					(r: any) => r.responseTime === minTime
 				);
-				expect(data.statistics.fastest.resolver).toBe(fastestResult.resolverName);
+				const fastestResolverNames = resolversWithMinTime.map((r: any) => r.resolverName);
+				expect(fastestResolverNames).toContain(data.statistics.fastest.resolver);
 			}
 		});
 
