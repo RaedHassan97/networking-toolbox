@@ -11,7 +11,7 @@
   let { text, position = 'top', delay = 500, children }: Props = $props();
 
   let showTooltip = $state(false);
-  let tooltipTimeout: number;
+  let tooltipTimeout: ReturnType<typeof setTimeout>;
 
   /**
    * Show tooltip after delay
