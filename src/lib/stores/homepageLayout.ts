@@ -1,7 +1,7 @@
 import { writable } from 'svelte/store';
 import { browser } from '$app/environment';
 
-export type HomepageLayoutMode = 'default' | 'minimal' | 'categories';
+export type HomepageLayoutMode = 'default' | 'minimal' | 'carousel' | 'categories';
 
 export interface HomepageLayoutOption {
   id: HomepageLayoutMode;
@@ -14,9 +14,9 @@ const STORAGE_KEY = 'homepage-layout';
 // Available homepage layout options
 export const homepageLayoutOptions: HomepageLayoutOption[] = [
   {
-    id: 'default',
-    name: 'Default',
-    description: 'Full homepage with all sections and features',
+    id: 'categories',
+    name: 'Categories',
+    description: 'Organized by tool categories with flexible grid layout',
   },
   {
     id: 'minimal',
@@ -24,9 +24,14 @@ export const homepageLayoutOptions: HomepageLayoutOption[] = [
     description: 'Clean, simplified homepage layout',
   },
   {
-    id: 'categories',
-    name: 'Categories',
-    description: 'Organized by tool categories with flexible grid layout',
+    id: 'carousel',
+    name: 'carousel',
+    description: 'Full homepage with all sections and features',
+  },
+  {
+    id: 'default',
+    name: 'Legacy',
+    description: 'Full homepage with all sections and features',
   },
 ];
 

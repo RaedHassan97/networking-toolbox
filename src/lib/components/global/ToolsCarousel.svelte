@@ -36,7 +36,7 @@
 
   const dupe = (arr: NavItem[]) => [...arr, ...arr]; // seamless loop
 
-  const durationFor = (count: number) => Math.max(12, Math.round(speedBase * (count / 8))); // scale with item count
+  const durationFor = (count: number) => Math.max(12, Math.round(speedBase * (count / 4))); // scale with item count
 
   const cardWidthCss = typeof cardWidth === 'number' ? `${cardWidth}px` : cardWidth;
 </script>
@@ -73,8 +73,13 @@
     // border: 1px solid var(--border-primary);
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-md);
-    :global(.tool-card):hover {
-      transform: translateY(0);
+    :global(.card-wrap) {
+      --card-width: 16rem;
+    }
+    :global(.tool-card) {
+      &:hover {
+        transform: translateY(0);
+      }
     }
   }
 
