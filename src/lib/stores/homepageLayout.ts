@@ -1,7 +1,7 @@
 import { writable } from 'svelte/store';
 import { browser } from '$app/environment';
 
-export type HomepageLayoutMode = 'default' | 'minimal' | 'carousel' | 'categories' | 'bookmarks';
+export type HomepageLayoutMode = 'default' | 'minimal' | 'carousel' | 'categories' | 'bookmarks' | 'small-icons';
 
 export interface HomepageLayoutOption {
   id: HomepageLayoutMode;
@@ -32,6 +32,11 @@ export const homepageLayoutOptions: HomepageLayoutOption[] = [
     id: 'carousel',
     name: 'Carousel',
     description: 'Full homepage with all sections and features',
+  },
+  {
+    id: 'small-icons',
+    name: 'Small Icons',
+    description: 'Compact grid of tool icons only',
   },
   {
     id: 'default',

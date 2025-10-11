@@ -7,7 +7,7 @@
   import { bookmarks, type BookmarkedTool } from '$lib/stores/bookmarks';
   import { toolUsage, recentlyUsedTools } from '$lib/stores/toolUsage';
   import { activeContextMenu } from '$lib/stores/contextMenu';
-  import { site } from '$lib/constants/site';
+  import { handleToolContextMenu, getToolContextMenuId, getToolContextMenuItems } from '$lib/utils/tool-context-menu';
 
   export let tool: NavItem;
   export let size: 'default' | 'small' | 'compact' = 'default';
@@ -15,8 +15,7 @@
   let isHovered = false;
   let isBookmarked = false;
 
-  // Generate unique ID for this tool card
-  const menuId = `context-menu-${tool.href}`;
+  const menuId = getToolContextMenuId(tool);
 
   onMount(() => {
     bookmarks.init();
@@ -24,7 +23,6 @@
   });
 
   $: isBookmarked = bookmarks.isBookmarked(tool.href, $bookmarks);
-  $: isInRecents = $recentlyUsedTools.some((t) => t.href === tool.href);
   $: showContextMenu = $activeContextMenu.id === menuId;
 
   function toggleBookmark(e?: Event) {
@@ -43,49 +41,11 @@
     bookmarks.toggle(bookmarkedTool);
   }
 
-  function handleContextMenu(e: MouseEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-    activeContextMenu.open(menuId, e.clientX, e.clientY);
-  }
-
-  function copyUrl() {
-    const origin = typeof window !== 'undefined' ? window.location.origin : site.url;
-    const url = `${origin}${tool.href}`;
-    navigator.clipboard.writeText(url);
-  }
-
-  function openTool() {
-    window.location.href = tool.href;
-  }
-
-  function removeFromRecents() {
-    toolUsage.remove(tool.href);
-  }
-
-  $: contextMenuItems = [
-    {
-      label: isBookmarked ? 'Remove Bookmark' : 'Bookmark',
-      icon: isBookmarked ? 'bookmark-remove' : 'bookmark-add',
-      action: () => toggleBookmark(),
-    },
-    {
-      label: 'Open',
-      icon: 'external-link',
-      action: openTool,
-    },
-    {
-      label: 'Copy URL',
-      icon: 'link',
-      action: copyUrl,
-    },
-    {
-      label: 'Remove from Recents',
-      icon: 'trash',
-      action: removeFromRecents,
-      condition: isInRecents,
-    },
-  ];
+  $: contextMenuItems = getToolContextMenuItems({
+    tool,
+    bookmarkedTools: $bookmarks,
+    recentTools: $recentlyUsedTools,
+  });
 </script>
 
 {#if size === 'small'}
@@ -94,7 +54,7 @@
     class="tool-card small"
     aria-label={tool.label}
     use:tooltip={{ text: tool.description || '' }}
-    on:contextmenu={handleContextMenu}
+    on:contextmenu={(e) => handleToolContextMenu(e, tool)}
   >
     <div class="left">
       <h3>{tool.label}</h3>
@@ -118,7 +78,7 @@
     class="tool-card compact"
     aria-label={tool.label}
     use:tooltip={{ text: tool.description || '' }}
-    on:contextmenu={handleContextMenu}
+    on:contextmenu={(e) => handleToolContextMenu(e, tool)}
   >
     <div class="compact-content">
       <div class="tool-icon">
@@ -134,7 +94,7 @@
     aria-label={tool.label}
     on:mouseenter={() => (isHovered = true)}
     on:mouseleave={() => (isHovered = false)}
-    on:contextmenu={handleContextMenu}
+    on:contextmenu={(e) => handleToolContextMenu(e, tool)}
   >
     <div class="card-header">
       <h3>{tool.label}</h3>
