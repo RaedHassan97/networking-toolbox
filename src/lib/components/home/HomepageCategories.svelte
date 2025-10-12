@@ -7,6 +7,7 @@
   import { frequentlyUsedTools, recentlyUsedTools } from '$lib/stores/toolUsage';
   import Icon from '$lib/components/global/Icon.svelte';
   import { extractNavItems } from '$lib/utils/nav';
+  import QuickTips from '$lib/components/furniture/QuickTips.svelte';
 
   interface Props {
     toolPages: NavItem[];
@@ -114,6 +115,8 @@
 
 <!-- Search Filter -->
 <SearchFilter bind:filteredTools bind:searchQuery />
+
+<QuickTips />
 
 {#if searchQuery.trim() === ''}
   <div class="categories-layout">
