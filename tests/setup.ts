@@ -1,7 +1,12 @@
 import '@testing-library/jest-dom/vitest';
-import { beforeAll, afterEach, afterAll } from 'vitest';
+import { beforeAll, afterEach, afterAll, vi } from 'vitest';
 import { setupServer } from 'msw/node';
 import { http, HttpResponse } from 'msw';
+
+// Mock SvelteKit env module for tests
+vi.mock('$env/dynamic/public', () => ({
+  env: {}
+}));
 
 // MSW server for mocking API calls
 export const server = setupServer(

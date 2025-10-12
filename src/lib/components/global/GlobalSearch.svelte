@@ -8,6 +8,13 @@
   import { bookmarks } from '$lib/stores/bookmarks';
   import { frequentlyUsedTools, toolUsage } from '$lib/stores/toolUsage';
   import { tooltip } from '$lib/actions/tooltip';
+  import { formatShortcut } from '$lib/utils/keyboard';
+
+  interface Props {
+    embedded?: boolean; // Whether this is embedded in a page vs popup modal
+  }
+
+  let { embedded = false }: Props = $props();
 
   // Create reactive state using individual variables
   let isOpen = $state(false);
@@ -16,38 +23,75 @@
   let selectedIndex = $state(0);
   let searchInput: HTMLInputElement | undefined = $state();
 
-  const isMac = browser && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-  const shortcutKey = isMac ? '⌘' : 'Ctrl';
+  // Levenshtein distance for fuzzy matching
+
+  /**
+   * Calculate the Levenshtein distance between two strings (aka similarity score)
+   * Ok, chill before you scream "import a library"...
+   * It's not as bad as it looks....  Basically, we're just creating a 2D array
+   * and filling it in based on character comparisons. The array size is small
+   * (query length x label length) so performance is not a big deal here.
+   * It's just a rudimentary fuzzy search to catch typos and close matches.
+   * @param a (string 1)
+   * @param b (string 2)
+   */
+  function levenshtein(a: string, b: string): number {
+    const matrix: number[][] = [];
+    for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+    for (let j = 0; j <= a.length; j++) matrix[0]![j] = j;
+    for (let i = 1; i <= b.length; i++) {
+      for (let j = 1; j <= a.length; j++) {
+        if (b.charAt(i - 1) === a.charAt(j - 1)) {
+          matrix[i]![j] = matrix[i - 1]![j - 1]!;
+        } else {
+          matrix[i]![j] = Math.min(matrix[i - 1]![j - 1]! + 1, matrix[i]![j - 1]! + 1, matrix[i - 1]![j]! + 1);
+        }
+      }
+    }
+    return matrix[b.length]![a.length]!;
+  }
+
+  // Get smart suggestions when no results
+  function getSuggested(): NavItem[] {
+    const fromStores = [...$frequentlyUsedTools, ...$bookmarks]
+      .map((item) => ALL_PAGES.find((p) => p.href === item.href))
+      .filter((item): item is NavItem => item !== undefined);
+
+    const combined = [...fromStores, ...ALL_PAGES]
+      .filter((item, idx, arr) => arr.findIndex((i) => i.href === item.href) === idx)
+      .sort(() => Math.random() - 0.5);
+    return combined.slice(0, 12);
+  }
 
   function search(q: string): NavItem[] {
     if (!q.trim()) return [];
 
     const normalizedQuery = q.toLowerCase().trim();
     const tokens = normalizedQuery.split(/\s+/);
+    const bookmarkedHrefs = new Set($bookmarks.map((b) => b.href));
+    const frequentHrefs = new Set($frequentlyUsedTools.map((t) => t.href));
 
-    return ALL_PAGES.map((page) => {
+    const results = ALL_PAGES.map((page) => {
       let score = 0;
-      const searchText = `${page.label} ${page.description || ''} ${page.keywords?.join(' ') || ''}`.toLowerCase();
+      const label = page.label.toLowerCase();
+      const searchText = `${label} ${page.description || ''} ${page.keywords?.join(' ') || ''}`.toLowerCase();
 
       // Exact label match (highest priority)
-      if (page.label.toLowerCase() === normalizedQuery) score += 1000;
+      if (label === normalizedQuery) score += 1000;
 
       // Label starts with query
-      if (page.label.toLowerCase().startsWith(normalizedQuery)) score += 500;
+      if (label.startsWith(normalizedQuery)) score += 500;
 
       // Label contains query
-      if (page.label.toLowerCase().includes(normalizedQuery)) score += 200;
+      if (label.includes(normalizedQuery)) score += 200;
 
       // All tokens found
-      const allTokensFound = tokens.every((token) => searchText.includes(token));
-      if (allTokensFound) score += 100;
+      if (tokens.every((token) => searchText.includes(token))) score += 100;
 
       // Keywords match
       if (page.keywords) {
         tokens.forEach((token) => {
-          if (page.keywords!.some((keyword) => keyword.toLowerCase().includes(token))) {
-            score += 50;
-          }
+          if (page.keywords!.some((kw) => kw.toLowerCase().includes(token))) score += 50;
         });
       }
 
@@ -56,11 +100,92 @@
         score += 25;
       }
 
+      // Boost for bookmarked/frequent
+      if (bookmarkedHrefs.has(page.href)) score += 15;
+      if (frequentHrefs.has(page.href)) score += 10;
+
       return { ...page, score };
     })
-      .filter((page) => page.score > 0)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 8);
+      .filter((page) => page.score > 10)
+      .sort((a, b) => b.score - a.score);
+
+    // If few/no results and query is reasonable length, do fuzzy search
+    if (results.length < 3 && normalizedQuery.length >= 2 && normalizedQuery.length <= 20) {
+      const fuzzyResults = ALL_PAGES.map((page) => {
+        let score = results.find((r) => r.href === page.href)?.score || 0;
+        const label = page.label.toLowerCase();
+        const words = label.split(/\s+/);
+        let hasMeaningfulMatch = false;
+
+        // Acronym match (e.g., "dc" matches "DNS Check")
+        const acronym = words.map((w) => w[0]).join('');
+        if (acronym === normalizedQuery) {
+          score += 300;
+          hasMeaningfulMatch = true;
+        }
+        if (acronym.startsWith(normalizedQuery)) {
+          score += 150;
+          hasMeaningfulMatch = true;
+        }
+
+        // Fuzzy string match with Levenshtein distance
+        tokens.forEach((token) => {
+          if (token.length < 2) return; // Skip single chars
+
+          const distance = levenshtein(token, label);
+          const similarity = 1 - distance / Math.max(token.length, label.length);
+          if (similarity > 0.65) {
+            score += Math.floor(similarity * 100);
+            hasMeaningfulMatch = true;
+          }
+
+          // Check against individual words
+          words.forEach((word) => {
+            if (word.length < 2) return;
+            const wordDist = levenshtein(token, word);
+            const wordSim = 1 - wordDist / Math.max(token.length, word.length);
+            if (wordSim > 0.7) {
+              score += Math.floor(wordSim * 80);
+              hasMeaningfulMatch = true;
+            }
+          });
+
+          // Check keywords with fuzzy match
+          page.keywords?.forEach((keyword) => {
+            const kwDist = levenshtein(token, keyword.toLowerCase());
+            const kwSim = 1 - kwDist / Math.max(token.length, keyword.length);
+            if (kwSim > 0.75) {
+              score += Math.floor(kwSim * 60);
+              hasMeaningfulMatch = true;
+            }
+          });
+        });
+
+        // Partial word boundary match (only if token is significant portion of word)
+        tokens.forEach((token) => {
+          if (token.length >= 3) {
+            words.forEach((word) => {
+              if (word.includes(token) && token.length / word.length > 0.6) {
+                score += 40;
+                hasMeaningfulMatch = true;
+              }
+            });
+          }
+        });
+
+        // Boost for bookmarked/frequent (but don't count as meaningful match)
+        if (bookmarkedHrefs.has(page.href)) score += 15;
+        if (frequentHrefs.has(page.href)) score += 10;
+
+        return { ...page, score, hasMeaningfulMatch };
+      })
+        .filter((page) => page.score > 100 && page.hasMeaningfulMatch) // Must have meaningful match
+        .sort((a, b) => b.score - a.score);
+
+      return fuzzyResults.slice(0, 8);
+    }
+
+    return results.slice(0, 8);
   }
 
   // Using a separate internal function to avoid reactivity warnings
@@ -88,7 +213,9 @@
     const result = results[index];
     if (result) {
       goto(result.href);
-      close();
+      if (!embedded) {
+        close();
+      }
     }
   }
 
@@ -98,7 +225,15 @@
     switch (e.key) {
       case 'Escape':
         e.preventDefault();
-        close();
+        if (embedded) {
+          // In embedded mode, just clear the input
+          query = '';
+          results = [];
+          selectedIndex = 0;
+        } else {
+          // In modal mode, close the search
+          close();
+        }
         break;
       case 'ArrowDown':
         e.preventDefault();
@@ -130,174 +265,219 @@
   onMount(() => {
     bookmarks.init();
     toolUsage.init();
-    document.addEventListener('keydown', handleGlobalKeydown);
 
-    // Handle browser back button on mobile
-    const handlePopState = (e: PopStateEvent) => {
-      if (isOpen && window.innerWidth <= 768) {
-        e.preventDefault();
-        close();
-      }
-    };
+    // Only register global keyboard shortcut for modal mode
+    if (!embedded) {
+      document.addEventListener('keydown', handleGlobalKeydown);
 
-    window.addEventListener('popstate', handlePopState);
+      // Handle browser back button on mobile
+      const handlePopState = (e: PopStateEvent) => {
+        if (isOpen && window.innerWidth <= 768) {
+          e.preventDefault();
+          close();
+        }
+      };
 
-    return () => {
-      document.removeEventListener('keydown', handleGlobalKeydown);
-      window.removeEventListener('popstate', handlePopState);
-    };
+      window.addEventListener('popstate', handlePopState);
+
+      return () => {
+        document.removeEventListener('keydown', handleGlobalKeydown);
+        window.removeEventListener('popstate', handlePopState);
+      };
+    } else {
+      // In embedded mode, always show search and focus on mount
+      isOpen = true;
+      setTimeout(() => searchInput?.focus(), 100);
+    }
   });
 
   export { showSearch };
 </script>
 
-<!-- Trigger Button -->
-<button
-  class="action-button search-trigger"
-  onclick={openSearch}
-  aria-label="Open search"
-  use:tooltip={`Search (${shortcutKey}+K)`}
->
-  <Icon name="search" size="sm" />
-</button>
-
-<!-- Search Modal -->
-{#if isOpen}
-  <div
-    class="search-overlay"
-    onclick={close}
-    onkeydown={(e) => {
-      if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') close();
-    }}
-    role="button"
-    tabindex="-1"
-    aria-label="Close search"
+<!-- Trigger Button (only in modal mode) -->
+{#if !embedded}
+  <button
+    class="action-button search-trigger"
+    onclick={openSearch}
+    aria-label="Open search"
+    use:tooltip={`Search (${formatShortcut('^K')})`}
   >
-    <div
-      class="search-modal"
-      onclick={(e) => e.stopPropagation()}
-      onkeydown={(e) => {
-        if (e.key === 'Escape') close();
-        e.stopPropagation();
-      }}
-      role="dialog"
-      aria-modal="true"
-      tabindex="-1"
-    >
-      <div class="search-header">
-        <Icon name="search" size="sm" />
-        <input
-          bind:this={searchInput}
-          bind:value={query}
-          onkeydown={handleKeydown}
-          placeholder="Search tools and pages..."
-          class="search-input"
-          autocomplete="off"
-          spellcheck="false"
-        />
-        <button class="close-btn" onclick={close} aria-label="Close search">
-          <Icon name="x" size="sm" />
-        </button>
-      </div>
+    <Icon name="search" size="sm" />
+  </button>
+{/if}
 
-      {#if query.trim() && results.length > 0}
-        <div class="search-results">
-          {#each results as result, index (result.href)}
+<!-- Search Content Snippet -->
+{#snippet searchContent()}
+  <div class="search-header">
+    <Icon name="search" size="sm" />
+    <input
+      bind:this={searchInput}
+      bind:value={query}
+      onkeydown={handleKeydown}
+      placeholder="Search tools and pages..."
+      class="search-input"
+      autocomplete="off"
+      spellcheck="false"
+    />
+    {#if !embedded}
+      <button class="close-btn" onclick={close} aria-label="Close search">
+        <Icon name="x" size="sm" />
+      </button>
+    {/if}
+  </div>
+
+  {#if query.trim() && results.length > 0}
+    <div class="search-results">
+      {#each results as result, index (result.href)}
+        <button
+          class="result-item"
+          class:selected={index === selectedIndex}
+          onclick={() => selectResult(index)}
+          onmouseenter={() => (selectedIndex = index)}
+        >
+          <div class="result-content">
+            <div class="result-title">
+              <Icon name={result.icon || 'search'} size="xs" />
+              {result.label}
+            </div>
+            {#if result.description}
+              <div class="result-description">{result.description}</div>
+            {/if}
+          </div>
+          <div class="result-meta">
+            {#if index === selectedIndex}
+              <Icon name="link" size="xs" />
+            {/if}
+            <span class="result-path">{result.href}</span>
+          </div>
+        </button>
+      {/each}
+    </div>
+  {:else if query.trim()}
+    <div class="no-results">
+      <Icon name="search" size="md" />
+      <span>No results found for "{query}" (yet!)</span>
+    </div>
+    <div class="suggested-section">
+      <div class="suggested-header">
+        <Icon name="star" size="xs" />
+        <span>Suggested</span>
+      </div>
+      <div class="suggested-list">
+        {#each getSuggested() as item (item.href)}
+          <button
+            class="suggested-item"
+            onclick={() => {
+              goto(item.href);
+              if (!embedded) close();
+            }}
+          >
+            <Icon name={item.icon || 'search'} size="xs" />
+            <span>{item.label}</span>
+          </button>
+        {/each}
+      </div>
+    </div>
+  {:else}
+    <div class="search-help">
+      <div class="help-item">
+        <Icon name="search" size="xs" />
+        <span>Search for tools, calculators, and diagnostics</span>
+      </div>
+      <div class="help-item">
+        <Icon name="navigation" size="xs" />
+        <span>Use ↑↓ to navigate, Enter to select</span>
+      </div>
+    </div>
+
+    {#if $bookmarks.length > 0}
+      <div class="bookmarks-section">
+        <div class="bookmarks-header">
+          <Icon name="bookmarks" size="xs" />
+          <span>Bookmarked Tools</span>
+        </div>
+        <div class="bookmarks-list">
+          {#each $bookmarks.slice(0, 6) as bookmark, _index (bookmark.href)}
             <button
-              class="result-item"
-              class:selected={index === selectedIndex}
-              onclick={() => selectResult(index)}
-              onmouseenter={() => (selectedIndex = index)}
+              class="bookmark-item"
+              onclick={() => {
+                goto(bookmark.href);
+                if (!embedded) close();
+              }}
+              tabindex="0"
             >
-              <div class="result-content">
-                <div class="result-title">
-                  <Icon name={result.icon || 'search'} size="xs" />
-                  {result.label}
-                </div>
-                {#if result.description}
-                  <div class="result-description">{result.description}</div>
-                {/if}
+              <div class="bookmark-icon">
+                <Icon name={bookmark.icon} size="xs" />
               </div>
-              <div class="result-meta">
-                {#if index === selectedIndex}
-                  <Icon name="link" size="xs" />
-                {/if}
-                <span class="result-path">{result.href}</span>
-              </div>
+              <span class="bookmark-label">{bookmark.label}</span>
             </button>
           {/each}
         </div>
-      {:else if query.trim()}
-        <div class="no-results">
-          <Icon name="search" size="md" />
-          <span>No results found for "{query}"</span>
-        </div>
-      {:else}
-        <div class="search-help">
-          <div class="help-item">
-            <Icon name="search" size="xs" />
-            <span>Search for tools, calculators, and diagnostics</span>
-          </div>
-          <div class="help-item">
-            <Icon name="navigation" size="xs" />
-            <span>Use ↑↓ to navigate, Enter to select</span>
-          </div>
-        </div>
+      </div>
+    {/if}
 
-        {#if $bookmarks.length > 0}
-          <div class="bookmarks-section">
-            <div class="bookmarks-header">
-              <Icon name="bookmarks" size="xs" />
-              <span>Bookmarked Tools</span>
-            </div>
-            <div class="bookmarks-list">
-              {#each $bookmarks.slice(0, 6) as bookmark, _index (bookmark.href)}
-                <button
-                  class="bookmark-item"
-                  onclick={() => {
-                    goto(bookmark.href);
-                    close();
-                  }}
-                  tabindex="0"
-                >
-                  <div class="bookmark-icon">
-                    <Icon name={bookmark.icon} size="xs" />
-                  </div>
-                  <span class="bookmark-label">{bookmark.label}</span>
-                </button>
-              {/each}
-            </div>
-          </div>
-        {/if}
+    {#if $frequentlyUsedTools.length > 0}
+      <div class="frequently-used-section">
+        <div class="frequently-used-header">
+          <Icon name="clock" size="xs" />
+          <span>Most Used Tools</span>
+        </div>
+        <div class="frequently-used-list">
+          {#each $frequentlyUsedTools.slice(0, 12) as tool, _index (tool.href)}
+            <button
+              class="frequently-used-item"
+              onclick={() => {
+                goto(tool.href);
+                if (!embedded) close();
+              }}
+              tabindex="0"
+            >
+              <div class="frequently-used-icon">
+                <Icon name={tool.icon || ''} size="xs" />
+              </div>
+              <span class="frequently-used-label">{tool.label}</span>
+            </button>
+          {/each}
+        </div>
+      </div>
+    {/if}
+  {/if}
+{/snippet}
 
-        {#if $frequentlyUsedTools.length > 0}
-          <div class="frequently-used-section">
-            <div class="frequently-used-header">
-              <Icon name="clock" size="xs" />
-              <span>Most Used Tools</span>
-            </div>
-            <div class="frequently-used-list">
-              {#each $frequentlyUsedTools.slice(0, 12) as tool, _index (tool.href)}
-                <button
-                  class="frequently-used-item"
-                  onclick={() => {
-                    goto(tool.href);
-                    close();
-                  }}
-                  tabindex="0"
-                >
-                  <div class="frequently-used-icon">
-                    <Icon name={tool.icon || ''} size="xs" />
-                  </div>
-                  <span class="frequently-used-label">{tool.label}</span>
-                </button>
-              {/each}
-            </div>
-          </div>
-        {/if}
-      {/if}
+<!-- Search Modal/Embedded -->
+{#if isOpen}
+  {#if embedded}
+    <!-- Embedded mode: no overlay, direct content -->
+    <div class="search-embedded" role="search">
+      {@render searchContent()}
     </div>
-  </div>
+  {:else}
+    <!-- Modal mode: with overlay -->
+    <div
+      class="search-overlay"
+      onclick={close}
+      onkeydown={(e) => {
+        if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') close();
+      }}
+      role="button"
+      tabindex="-1"
+      aria-label="Close search"
+    >
+      <div
+        class="search-modal"
+        onclick={(e) => e.stopPropagation()}
+        onkeydown={(e) => {
+          if (e.key === 'Escape') close();
+          e.stopPropagation();
+        }}
+        role="dialog"
+        aria-modal="true"
+        tabindex="-1"
+      >
+        {@render searchContent()}
+      </div>
+    </div>
+  {/if}
 {/if}
 
 <style lang="scss">
@@ -306,11 +486,11 @@
     inset: 0;
     background: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(4px);
-    z-index: 1000;
+    z-index: 5;
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    padding-top: 15vh;
+    padding-top: 12vh;
     animation: fadeIn var(--transition-fast);
 
     @media (max-width: 768px) {
@@ -397,7 +577,7 @@
   }
 
   .search-results {
-    max-height: 60vh;
+    max-height: 70vh;
     overflow-y: auto;
 
     @media (max-width: 768px) {
@@ -429,6 +609,7 @@
     &:hover,
     &.selected {
       background: var(--surface-hover);
+      border-bottom: none;
     }
 
     &:last-child {
@@ -485,14 +666,81 @@
     flex-direction: column;
     align-items: center;
     gap: var(--spacing-md);
-    padding: var(--spacing-2xl);
+    padding: var(--spacing-2xl) var(--spacing-2xl) var(--spacing-md);
     color: var(--text-secondary);
     text-align: center;
 
     @media (max-width: 768px) {
-      padding: var(--spacing-xl) var(--spacing-md);
-      min-height: 50vh;
-      justify-content: center;
+      padding: var(--spacing-xl) var(--spacing-md) var(--spacing-md);
+    }
+  }
+
+  .suggested-section {
+    padding: var(--spacing-md) var(--spacing-lg) var(--spacing-lg);
+    border-top: 1px solid var(--border-secondary);
+
+    @media (max-width: 768px) {
+      padding: var(--spacing-md);
+    }
+  }
+
+  .suggested-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: var(--spacing-sm);
+
+    :global(svg) {
+      color: var(--color-warning);
+    }
+  }
+
+  .suggested-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+  }
+
+  .suggested-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-secondary);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: var(--font-size-xs);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    max-width: 180px;
+
+    &:hover,
+    &:focus {
+      background: var(--surface-hover);
+      border-color: var(--color-warning);
+      transform: translateY(-1px);
+      outline: none;
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+
+    span {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    :global(svg) {
+      flex-shrink: 0;
+      color: var(--text-tertiary);
     }
   }
 
@@ -653,6 +901,29 @@
     to {
       opacity: 1;
       transform: translateY(0);
+    }
+  }
+
+  // Embedded mode styles
+  .search-embedded {
+    width: 100%;
+    margin: 0 auto;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+    animation: fadeIn var(--transition-normal);
+
+    .search-header {
+      border-bottom: 1px solid var(--border-primary);
+      background: var(--bg-secondary);
+    }
+
+    .search-help,
+    .bookmarks-section,
+    .frequently-used-section {
+      background: var(--bg-secondary);
     }
   }
 </style>

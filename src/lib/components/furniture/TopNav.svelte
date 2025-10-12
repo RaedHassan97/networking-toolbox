@@ -15,7 +15,7 @@
   import { frequentlyUsedTools, toolUsage } from '$lib/stores/toolUsage';
   import { onMount } from 'svelte';
 
-  $: currentPath = $page.url.pathname;
+  $: currentPath = $page.url?.pathname ?? '/';
 
   let activeDropdown: string | null = null;
   let activeSubDropdown: string | null = null;

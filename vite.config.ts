@@ -10,5 +10,6 @@ export default defineConfig({
       bundleName: "networking-toolbox",
       uploadToken: process.env.CODECOV_TOKEN,
     }),
-	]
+	],
+  envPrefix: ['VITE_', 'PUBLIC_', 'NTB_'],
 });

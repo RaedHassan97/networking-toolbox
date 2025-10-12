@@ -12,6 +12,7 @@ export type NavItem = {
   description?: string;
   icon?: string;
   keywords?: string[];
+  featured?: boolean;
 };
 
 export type NavGroup = {
@@ -199,6 +200,7 @@ export const SUB_NAV: Record<string, (NavItem | NavGroup)[]> = {
       label: 'IPv4 Subnet Calculator',
       description: 'Calculate subnet masks, network addresses, broadcast addresses, and host ranges',
       icon: 'subnet-calculator',
+      featured: true,
       keywords: [
         'subnet',
         'calculator',
@@ -263,6 +265,7 @@ export const SUB_NAV: Record<string, (NavItem | NavGroup)[]> = {
           label: 'CIDR → Mask',
           description: 'Convert CIDR notation (e.g. /24) to subnet mask format (255.255.255.0)',
           icon: 'cidr-convertor',
+          featured: true,
           keywords: ['cidr', 'convert', 'converter', 'mask', 'subnet', 'notation', '/24', '255.255.255.0'],
         },
         {
@@ -425,6 +428,7 @@ export const SUB_NAV: Record<string, (NavItem | NavGroup)[]> = {
           label: 'Contains (A ⊆ B)',
           description: 'Check if one IP set contains another',
           icon: 'containment',
+          featured: true,
           keywords: [
             'set',
             'operations',
@@ -733,6 +737,7 @@ export const SUB_NAV: Record<string, (NavItem | NavGroup)[]> = {
           label: 'MAC Address Converter',
           description: 'Convert MAC addresses between formats and identify manufacturer from OUI database',
           icon: 'mac-lookup',
+          featured: true,
           keywords: [
             'mac',
             'address',
@@ -1242,6 +1247,7 @@ export const SUB_NAV: Record<string, (NavItem | NavGroup)[]> = {
           label: 'DNS Query Performance',
           description: 'Compare DNS resolver speeds across multiple providers to find the fastest for your location',
           icon: 'zap',
+          featured: true,
           keywords: [
             'dns',
             'performance',
@@ -1421,6 +1427,7 @@ export const SUB_NAV: Record<string, (NavItem | NavGroup)[]> = {
           description:
             'Analyze TLS/SSL handshake timing breakdown with detailed phase information and certificate exchange',
           icon: 'handshake',
+          featured: true,
           keywords: [
             'tls',
             'handshake',
@@ -1439,6 +1446,7 @@ export const SUB_NAV: Record<string, (NavItem | NavGroup)[]> = {
           label: 'CT Log Search',
           description: 'Search Certificate Transparency logs to discover all certificates issued for a domain',
           icon: 'certificate',
+          featured: true,
           keywords: [
             'ct',
             'certificate',

@@ -79,6 +79,9 @@ const config = {
 		paths: {
 			base: process.env.BASE_URL || process.env.BASE_PATH || '',
 		},
+		env: {
+			publicPrefix: 'NTB_',
+		},
 		prerender: {
 			entries: ['/', '/sitemap'] ,
 			handleHttpError: 'warn',

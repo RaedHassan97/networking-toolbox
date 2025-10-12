@@ -29,10 +29,11 @@
   let faviconTrigger = $state(0); // Trigger to force favicon updates
   let accessibilitySettings = $state(accessibility); // Accessibility settings store
   let currentTheme = $state(theme); // Theme store
+  let currentBookmarks = $state(bookmarks); // Bookmarks store
 
   // Get page-specific metadata or fallback to site defaults
   const seoData = $derived.by(() => {
-    const currentPath = $page.url.pathname;
+    const currentPath = $page.url?.pathname ?? '/';
     const pageDetails = getPageDetails(currentPath);
 
     return {
@@ -49,7 +50,7 @@
     void faviconTrigger; // Include in order to force updates when theme changes
 
     // Check if we're on an error page
-    const isErrorPage = $page.status >= 400;
+    const isErrorPage = ($page.status ?? 200) >= 400;
     if (isErrorPage) {
       const errorFaviconDataUri = generateFaviconDataUri('lost');
       if (errorFaviconDataUri) {
@@ -57,7 +58,7 @@
       }
     }
 
-    const currentPath = $page.url.pathname;
+    const currentPath = $page.url?.pathname ?? '/';
     const pageDetailsWithIcon = getPageDetailsWithIcon(currentPath);
 
     if (pageDetailsWithIcon?.icon) {
@@ -73,17 +74,55 @@
     return favicon;
   });
 
+  function handleGlobalKeydown(e: KeyboardEvent) {
+    // Ctrl + H to go to homepage
+    if (e.ctrlKey && e.key === 'h') {
+      e.preventDefault();
+      window.location.href = '/';
+    }
+    // Ctrl + B to go to bookmarks page
+    else if (e.ctrlKey && e.key === 'b') {
+      e.preventDefault();
+      window.location.href = '/bookmarks';
+    }
+    // Ctrl + 0 - smart navigation (10th bookmark or homepage)
+    else if (e.ctrlKey && e.key === '0') {
+      e.preventDefault();
+      if ($currentBookmarks[9]) {
+        window.location.href = $currentBookmarks[9].href;
+      } else {
+        window.location.href = '/';
+      }
+    }
+    // Ctrl + [1-9] to jump to bookmarked tool
+    else if (e.ctrlKey && e.key >= '1' && e.key <= '9') {
+      e.preventDefault();
+      const index = parseInt(e.key, 10) - 1;
+
+      if ($currentBookmarks[index]) {
+        window.location.href = $currentBookmarks[index].href;
+      }
+    }
+  }
+
   onMount(() => {
     theme.init();
     toolUsage.init();
     accessibility.init();
     bookmarks.init();
     initializeOfflineSupport();
+
+    // Add global keyboard shortcuts
+    window.addEventListener('keydown', handleGlobalKeydown);
+
+    return () => {
+      window.removeEventListener('keydown', handleGlobalKeydown);
+    };
   });
 
   // Track tool visits when page changes
   $effect(() => {
-    const currentPath = $page.url.pathname;
+    const currentPath = $page.url?.pathname ?? '/';
 
     // Check if current path is a tool page
     const toolPage = ALL_PAGES.find((tool) => tool.href === currentPath);

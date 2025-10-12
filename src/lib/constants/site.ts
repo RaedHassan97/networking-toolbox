@@ -1,11 +1,12 @@
+import { SITE_NAME, SITE_TITLE, SITE_DESCRIPTION } from '$lib/config/customizable-settings';
+
 export const site = {
-  name: 'Networking Toolbox',
-  title: 'Networking Toolbox',
+  name: SITE_NAME || 'Networking Toolbox',
+  title: SITE_TITLE || 'Networking Toolbox',
   description: 'A free set of online tools to help with IP addressing and subnetting.',
   longDescription:
     'Comprehensive IP address calculator with subnet calculations, CIDR conversion, IP format conversion, and network reference tools.',
-  heroDescription:
-    'Comprehensive suite of networking tools for subnet calculations, CIDR conversions, IP format transformations, and network reference information.',
+  heroDescription: SITE_DESCRIPTION || 'Your companion for all-things networking',
   keywords: 'IP calculator, subnet calculator, CIDR converter, network tools, IP tools, networking',
   url: 'https://networking-toolbox.as93.net',
   image: 'https://networking-toolbox.as93.net/og-image.png',
@@ -35,8 +36,6 @@ export const author = {
   url: 'https://aliciasykes.com',
   portfolio: 'https://as93.net',
   sponsor: 'https://github.com/sponsors/lissy93',
-  // avatar: 'https://i.ibb.co/678bNCjD/alicia-sykes-184-Edit.jpg',
-  // avatar: 'https://apps.aliciasykes.com/profile.jpg',
   avatar: 'https://i.ibb.co/Q7XTgybB/DSC-0444-2.jpg',
 };
 

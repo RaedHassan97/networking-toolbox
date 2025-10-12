@@ -1,17 +1,30 @@
 <script lang="ts">
   import { ALL_PAGES, type NavItem } from '$lib/constants/nav';
   import Icon from '$lib/components/global/Icon.svelte';
+  import { debounce } from '$lib/utils/debounce';
 
   let {
     filteredTools = $bindable(),
     searchQuery = $bindable(),
+    isSearchOpen = $bindable(false),
   }: {
     filteredTools: NavItem[];
     searchQuery: string;
+    isSearchOpen?: boolean;
   } = $props();
 
   let searchInput: HTMLInputElement | undefined = $state();
-  let isSearchOpen: boolean = $state(false);
+
+  // Expose openSearch method for parent components
+  export function openSearch() {
+    isSearchOpen = true;
+    // Focus input after it's rendered
+    setTimeout(() => {
+      if (searchInput) {
+        searchInput.focus();
+      }
+    }, 0);
+  }
 
   // Weight different match types for relevance scoring
   const MATCH_WEIGHTS = {
@@ -99,22 +112,17 @@
     return results;
   }
 
+  // Debounced search function (only debounce the filtering, not the input value)
+  const debouncedSearch = debounce((...args: unknown[]) => {
+    const query = (args[0] as string) ?? '';
+    filteredTools = performSearch(query);
+  }, 220);
+
   // Handle search input changes
   function handleSearch(event: Event) {
     const target = event.target as HTMLInputElement;
     searchQuery = target.value;
-    filteredTools = performSearch(searchQuery);
-  }
-
-  // Open search input
-  function openSearch() {
-    isSearchOpen = true;
-    // Focus input after it's rendered
-    setTimeout(() => {
-      if (searchInput) {
-        searchInput.focus();
-      }
-    }, 0);
+    debouncedSearch(searchQuery);
   }
 
   // Clear search and close input
@@ -128,36 +136,24 @@
   }
 </script>
 
-<div class="search-container">
-  <!-- Always reserve space for search input to prevent jumping -->
-  <div class="search-wrapper">
-    {#if !isSearchOpen}
-      <!-- Search Chip -->
-      <button class="search-chip" onclick={openSearch} aria-label="Open search">
-        <span class="search-text">Filter</span>
-        <span class="search-shortcut">⌘K</span>
+{#if isSearchOpen}
+  <div class="search-container">
+    <div class="search-input-wrapper">
+      <Icon name="search" />
+      <input
+        bind:this={searchInput}
+        type="text"
+        placeholder="Search tools and reference..."
+        class="search-input"
+        value={searchQuery}
+        oninput={handleSearch}
+      />
+      <button class="close-search-button" onclick={clearSearch} aria-label="Close search">
+        <Icon name="x" size="sm" />
       </button>
-    {:else}
-      <!-- Expanded Search Input -->
-      <div class="search-input-wrapper" class:expanding={isSearchOpen}>
-        <Icon name="search" />
-        <input
-          bind:this={searchInput}
-          type="text"
-          placeholder="Search tools and reference..."
-          class="search-input"
-          value={searchQuery}
-          oninput={handleSearch}
-        />
-        <button class="close-search-button" onclick={clearSearch} aria-label="Close search">
-          <Icon name="x" size="sm" />
-        </button>
-      </div>
-    {/if}
-  </div>
+    </div>
 
-  <!-- Search results info with smooth height transition -->
-  <div class="search-results-container" class:visible={isSearchOpen}>
+    <!-- Search results info -->
     <div class="search-results-info">
       {#if searchQuery.length === 0}
         <span class="results-count">
@@ -172,99 +168,22 @@
       {/if}
     </div>
   </div>
-</div>
+{/if}
 
 <style lang="scss">
   .search-container {
     margin-bottom: var(--spacing-lg);
-    text-align: center;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+    animation: slideIn 0.2s ease-out;
   }
 
-  .search-wrapper {
-    // Reserve consistent height to prevent content jumping
-    min-height: 2.5rem; // Height of search chip
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: min-height var(--transition-normal) ease-out;
-
-    // When search is open, increase height smoothly
-    &:has(.search-input-wrapper) {
-      min-height: 3rem; // Height of search input
-    }
-  }
-
-  // Search Chip Styles
-  .search-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    padding: var(--spacing-xs) var(--spacing-sm);
-    background-color: var(--bg-secondary);
-    border: 1px solid var(--border-primary);
-    border-radius: var(--radius-lg);
-    color: var(--text-primary);
-    font-size: var(--font-size-xs);
-    font-family: var(--font-mono);
-    cursor: pointer;
-    transition: all var(--transition-fast);
-    box-shadow: var(--shadow-sm);
-    opacity: 1;
-    transform: scale(1) translateY(0);
-
-    &:hover {
-      background-color: var(--surface-hover);
-      border-color: var(--color-primary);
-      transform: translateY(-1px) scale(1.02);
-      box-shadow: var(--shadow-md);
-    }
-
-    &:focus-visible {
-      outline: 2px solid var(--color-primary);
-      outline-offset: 2px;
-    }
-
-    &:active {
-      transform: scale(0.98) translateY(1px);
-      box-shadow: var(--shadow-sm);
-    }
-
-    // Subtle pulse animation on load
-    animation: chipAppear 0.4s ease-out;
-
-    .search-text {
-      color: var(--text-primary);
-      font-weight: 500;
-    }
-
-    .search-shortcut {
-      background-color: var(--bg-tertiary);
-      border: 1px solid var(--border-secondary);
-      border-radius: var(--radius-sm);
-      padding: 2px var(--spacing-xs);
-      font-size: var(--font-size-xs);
-      color: var(--text-secondary);
-      font-family: var(--font-mono);
-    }
-  }
-
-  // Expanded Search Input Styles
   .search-input-wrapper {
     position: relative;
     display: flex;
     align-items: center;
-    max-width: 600px;
-    margin: 0 auto;
     width: 100%;
-    opacity: 0;
-    transform: scale(0.95) translateY(-4px);
-    transition: all var(--transition-normal) ease-out;
-
-    // Animation when expanding
-    &.expanding {
-      opacity: 1;
-      transform: scale(1) translateY(0);
-    }
 
     :global(.icon) {
       position: absolute;
@@ -323,30 +242,11 @@
     }
   }
 
-  // Search results container with smooth height animation
-  .search-results-container {
-    overflow: hidden;
-    max-height: 0;
-    opacity: 0;
-    transition: all var(--transition-normal) ease-out;
-
-    &.visible {
-      max-height: 3rem; // Enough for results info
-      opacity: 1;
-    }
-  }
-
   .search-results-info {
     text-align: center;
     padding: var(--spacing-sm) 0;
     font-size: var(--font-size-sm);
     color: var(--text-secondary);
-    transform: translateY(-8px);
-    transition: transform var(--transition-normal) ease-out;
-
-    .search-results-container.visible & {
-      transform: translateY(0);
-    }
   }
 
   .no-results {
@@ -358,50 +258,25 @@
     color: var(--text-secondary);
   }
 
-  // Keyframe animations
-  @keyframes chipAppear {
-    0% {
+  @keyframes slideIn {
+    from {
       opacity: 0;
-      transform: scale(0.9) translateY(4px);
+      transform: translateY(-8px);
     }
-    100% {
+    to {
       opacity: 1;
-      transform: scale(1) translateY(0);
-    }
-  }
-
-  @keyframes inputExpand {
-    0% {
-      opacity: 0;
-      transform: scale(0.95) translateY(-8px);
-    }
-    100% {
-      opacity: 1;
-      transform: scale(1) translateY(0);
+      transform: translateY(0);
     }
   }
 
   @media (max-width: 768px) {
-    .search-input-wrapper {
-      max-width: none;
-      margin: 0 var(--spacing-md);
+    .search-container {
+      margin-left: var(--spacing-md);
+      margin-right: var(--spacing-md);
     }
 
     .search-input {
       font-size: var(--font-size-sm);
-    }
-
-    .search-chip {
-      font-size: var(--font-size-xs);
-      padding: var(--spacing-xs) var(--spacing-sm);
-    }
-
-    .search-wrapper {
-      min-height: 2rem;
-
-      &:has(.search-input-wrapper) {
-        min-height: 2.5rem;
-      }
     }
   }
 </style>

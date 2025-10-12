@@ -14,16 +14,33 @@ export interface ToolUsage {
 const STORAGE_KEY = 'networking-toolbox-tool-usage';
 
 const thresholdVisits = 4;
-const maxItems = 6;
+const maxItems = 12;
+
+// Get initial tool usage from localStorage (runs immediately on import)
+function getInitialToolUsage(): ToolUsage {
+  if (browser) {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        return JSON.parse(stored);
+      }
+    } catch (error) {
+      console.error('Failed to load tool usage data:', error);
+    }
+  }
+  return {};
+}
 
 function createToolUsageStore() {
-  const { subscribe, set, update } = writable<ToolUsage>({});
+  const { subscribe, set, update } = writable<ToolUsage>(getInitialToolUsage());
 
   return {
     subscribe,
 
     /**
      * Initialize the store from localStorage
+     * Note: Store is already initialized with correct value on creation,
+     * this is kept for backwards compatibility
      */
     init() {
       if (!browser) return;
@@ -123,6 +140,20 @@ export const frequentlyUsedTools = derived(toolUsage, ($toolUsage) => {
   const sorted = Object.entries($toolUsage)
     .filter(([_, data]) => data.count >= thresholdVisits)
     .sort((a, b) => b[1].count - a[1].count)
+    .slice(0, maxItems);
+
+  return sorted.map(([href, data]) => ({
+    href,
+    ...data,
+  }));
+});
+
+/**
+ * Derived store for recently used tools
+ */
+export const recentlyUsedTools = derived(toolUsage, ($toolUsage) => {
+  const sorted = Object.entries($toolUsage)
+    .sort((a, b) => b[1].lastVisited - a[1].lastVisited)
     .slice(0, maxItems);
 
   return sorted.map(([href, data]) => ({

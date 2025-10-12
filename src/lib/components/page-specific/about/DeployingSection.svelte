@@ -16,7 +16,8 @@
     <code>docker run -p 8080:8080 lissy93/networking-toolbox</code>
   </div>
   <p>
-    You can also checkout our <a href="https://github.com/Lissy93/networking-toolbox/blob/main/docker-compose.yml"
+    You can also checkout our
+    <a href="https://github.com/Lissy93/networking-toolbox/blob/main/docker-compose.yml"
       ><code>docker-compose.yml</code></a
     >, using the
     <a href="https://hub.docker.com/r/lissy93/networking-toolbox"><code>lissy93/networking-toolbox</code></a> image from
@@ -42,9 +43,55 @@
   <h3>Option #4 - Source</h3>
   <p>
     If you want to make any changes before deploying, or want to host it on any other platform not already covered
-    above, then you can easily do so, by compiling the app from source. We've dot detailed <a href="/about/building"
-      >Building Instructions</a
-    >, or you can check out the docs in the repo.
+    above, then you can easily do so, by compiling the app from source. It's very easy, and we've dot detailed
+    <a href="/about/building">Building Instructions</a>, or you can check out the docs in the repo.
+  </p>
+</section>
+
+<section>
+  <h2>Customizing</h2>
+  <p>You can customize the branding of your instance, by setting a few environment variables. All are optional.</p>
+  <ul>
+    <li><code>NTB_SITE_NAME</code> - Change sitename</li>
+    <li><code>NTB_SITE_DESCRIPTION</code> - Change site tagline</li>
+    <li><code>NTB_SITE_ICON</code> - Set site icon</li>
+    <li><code>NTB_HOMEPAGE_LAYOUT</code> - Set homepage layout</li>
+    <li><code>NTB_NAVBAR_DISPLAY</code> - Set navbar display option</li>
+    <li><code>NTB_DEFAULT_THEME</code> - Set default theme</li>
+    <li><code>NTB_DEFAULT_LANGUAGE</code> - Set default lang</li>
+  </ul>
+
+  <p>
+    For examples on how to apply these, take a look at
+    <a href="https://github.com/Lissy93/networking-toolbox/blob/main/.github/docs/app-customization.md">these docs</a>.
+  </p>
+</section>
+
+<section>
+  <h2>Terms</h2>
+  <p>Your only obligations are:</p>
+  <ul>
+    <li>
+      Preserve the MIT license. You can view this on the <a href="/about/license">Licensing Page</a>
+    </li>
+    <li>
+      You can not hold the author liable for any damages, and you understand that the software is provided "as is" with
+      no warranties
+    </li>
+    <li>
+      Not use the name "Networking Toolbox" or the logo commercially to build a competing product, without prior
+      permission (you can rebrand it though)
+    </li>
+    <li>Not use the software for anything illegal, harmful, offensive, or otherwise objectionable</li>
+  </ul>
+  <p>
+    Beyond that, you're free to use it however you want, for personal or commercial use. You can rebrand it, or use
+    parts of the code in your own projects and edit anything.
+  </p>
+  <p>
+    If you've found the project helpful, and want to support us, considering <a
+      href="https://github.com/sponsors/Lissy93">sponsoring us</a
+    > on GitHub. It always means the world to me, and helps cover ongoing running costs 🩷
   </p>
 </section>
 

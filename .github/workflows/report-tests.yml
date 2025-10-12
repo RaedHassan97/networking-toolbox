@@ -1,3 +1,5 @@
+# Runs after the test workflow is done, uses results to gen a report for the PR
+
 name: 📣 Report Tests
 
 on:
@@ -10,6 +12,7 @@ permissions:
   contents: read
   checks: write    # For test reporting
   pull-requests: write  # For PR comments
+  actions: read
 
 jobs:
   report:
@@ -33,7 +36,7 @@ jobs:
         uses: dorny/test-reporter@v1
         if: always()
         with:
-          name: Unit Tests
+          name: ⚙️ Unit Tests
           path: test-results.xml
           reporter: java-junit
           fail-on-error: false
@@ -44,7 +47,7 @@ jobs:
         uses: dorny/test-reporter@v1
         if: always()
         with:
-          name: API Contract Tests
+          name: 📡 API Contract Tests
           path: api-test-results.xml
           reporter: java-junit
           fail-on-error: false
@@ -55,7 +58,7 @@ jobs:
         uses: dorny/test-reporter@v1
         if: always()
         with:
-          name: E2E Tests
+          name: 🧭 E2E Tests
           path: e2e-results.xml
           reporter: java-junit
           fail-on-error: false
@@ -109,13 +112,12 @@ jobs:
           {
             echo "## 📊 Detailed Test Report"
             echo ""
-            echo "**Overall Status:** $(em "${{ github.event.workflow_run.conclusion }}")"
-            echo ""
-
             if [ "$failures" -eq 0 ]; then
-              echo "🎉 **All test suites passed!**"
+              echo "🎉 **All test suites passed!**<br>"
+              echo "![niceee](https://media.tenor.com/5IWFYb4D1WMAAAAi/swan-hack-dab.gif)<br>"
             else
-              echo "⚠️ **$failures test suite(s) failed**"
+              echo "⚠️ **$failures test suite(s) failed**<br>"
+              echo "![its not the end of the wold](https://media.tenor.com/37jOSZZvjQUAAAAi/pengu-pudgy.gif)<br>"
             fi
 
             # Detailed Unit Test Report

@@ -1,5 +1,6 @@
 import { writable } from 'svelte/store';
 import { browser } from '$app/environment';
+import { DEFAULT_THEME } from '$lib/config/customizable-settings';
 
 export type ThemeOption = string;
 
@@ -42,13 +43,27 @@ function loadCustomFont(fontConfig: { name: string; url: string; fallback?: stri
 function applyThemeClasses(theme: ThemeOption) {
   if (!browser) return;
 
+  const targetClass = theme !== 'dark' ? `theme-${theme}` : null;
+
+  // Check if the theme is already applied (prevents flash from re-applying)
+  const currentThemeClass = Array.from(document.documentElement.classList).find((cls) => cls.startsWith('theme-'));
+
+  if (currentThemeClass === targetClass) {
+    // Theme already applied, just ensure font is loaded
+    const themeConfig = themes.find((t) => t.id === theme);
+    if (themeConfig?.font) {
+      loadCustomFont(themeConfig.font);
+    }
+    return;
+  }
+
   // Remove all existing theme classes
   const allThemeClasses = themes.map((t) => `theme-${t.id}`);
   document.documentElement.classList.remove(...allThemeClasses);
 
   // Add the current theme class (except for default 'dark' theme)
-  if (theme !== 'dark') {
-    document.documentElement.classList.add(`theme-${theme}`);
+  if (targetClass) {
+    document.documentElement.classList.add(targetClass);
   }
 
   // Load custom font if the theme has one
@@ -162,8 +177,14 @@ export const themes: Theme[] = [
   },
 ];
 
+function isValidTheme(theme: string | null) {
+  if (!theme) return false;
+  return themes.some((t) => t.id === theme && t.available);
+}
+
 function createThemeStore() {
-  const { subscribe, set, update } = writable<ThemeOption>('dark');
+  const defaultTheme = isValidTheme(DEFAULT_THEME) ? DEFAULT_THEME : 'dark';
+  const { subscribe, set, update } = writable<ThemeOption>(defaultTheme);
 
   return {
     subscribe,
@@ -172,8 +193,7 @@ function createThemeStore() {
     init: () => {
       if (browser) {
         const saved = localStorage.getItem(STORAGE_KEY);
-        const isValidTheme = themes.some((t) => t.id === saved && t.available);
-        const initialTheme = isValidTheme ? (saved as ThemeOption) : 'dark';
+        const initialTheme = isValidTheme(saved) ? (saved as ThemeOption) : defaultTheme;
 
         set(initialTheme);
 
@@ -182,7 +202,7 @@ function createThemeStore() {
 
         return initialTheme;
       }
-      return 'dark';
+      return defaultTheme;
     },
 
     // Set theme and persist to localStorage

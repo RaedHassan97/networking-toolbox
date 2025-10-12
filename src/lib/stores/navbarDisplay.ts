@@ -1,5 +1,6 @@
 import { writable } from 'svelte/store';
 import { browser } from '$app/environment';
+import { DEFAULT_NAVBAR_DISPLAY } from '$lib/config/customizable-settings';
 
 export type NavbarDisplayMode = 'default' | 'bookmarked' | 'frequent' | 'none';
 
@@ -35,23 +36,37 @@ export const navbarDisplayOptions: NavbarDisplayOption[] = [
   },
 ];
 
+// Validate that a navbar display mode is valid
+function isValidNavbarDisplay(mode: string | null): boolean {
+  if (!mode) return false;
+  return navbarDisplayOptions.some((option) => option.id === mode);
+}
+
+// Get initial value from localStorage (runs immediately on import)
+function getInitialNavbarDisplay(): NavbarDisplayMode {
+  const validDefault = isValidNavbarDisplay(DEFAULT_NAVBAR_DISPLAY) ? DEFAULT_NAVBAR_DISPLAY : 'default';
+  if (browser) {
+    try {
+      const stored = localStorage.getItem('navbar-display');
+      return isValidNavbarDisplay(stored) ? (stored as NavbarDisplayMode) : validDefault;
+    } catch {
+      return validDefault;
+    }
+  }
+  return validDefault;
+}
+
 function createNavbarDisplayStore() {
-  const { subscribe, set } = writable<NavbarDisplayMode>('default');
+  const { subscribe, set } = writable<NavbarDisplayMode>(getInitialNavbarDisplay());
 
   return {
     subscribe,
 
     // Initialize from localStorage or default
+    // Note: Store is already initialized with correct value on creation,
+    // this is kept for backwards compatibility and does nothing
     init: () => {
-      if (browser) {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        const isValidMode = navbarDisplayOptions.some((option) => option.id === stored);
-        const initialMode = isValidMode ? (stored as NavbarDisplayMode) : 'default';
-
-        set(initialMode);
-        return initialMode;
-      }
-      return 'default';
+      return getInitialNavbarDisplay();
     },
 
     // Set navbar display mode and persist to localStorage

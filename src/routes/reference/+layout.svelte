@@ -6,7 +6,7 @@
   let { children } = $props();
 
   const pages = SUB_NAV['/reference']?.flatMap((s) => ('items' in s ? s.items : [s])) ?? [];
-  const idx = $derived(pages.findIndex((p) => p.href === $page.url.pathname));
+  const idx = $derived(pages.findIndex((p) => p.href === ($page.url?.pathname ?? '/')));
   const isRef = $derived(idx > -1);
   const prev = $derived(pages[idx - 1]);
   const next = $derived(pages[idx + 1]);
