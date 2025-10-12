@@ -14,7 +14,7 @@ export interface ToolUsage {
 const STORAGE_KEY = 'networking-toolbox-tool-usage';
 
 const thresholdVisits = 4;
-const maxItems = 6;
+const maxItems = 12;
 
 function createToolUsageStore() {
   const { subscribe, set, update } = writable<ToolUsage>({});

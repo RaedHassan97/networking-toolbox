@@ -15,6 +15,14 @@
 
   let { toolPages, referencePages }: Props = $props();
 
+  // Get featured tools (up to 12)
+  const featuredTools = $derived(
+    toolPages
+      .filter((tool) => tool.featured === true)
+      // .sort(() => Math.random() - 0.5)
+      .slice(0, 6),
+  );
+
   // Category configuration - easily extensible for future customization
   interface CategorySection {
     id: string;
@@ -109,7 +117,7 @@
 
 {#if searchQuery.trim() === ''}
   <div class="categories-layout">
-    <!-- Bookmarks Section -->
+    <!-- Bookmarks or Featured Section -->
     {#if $bookmarks.length > 0}
       <section class="category-section bookmarks-section">
         <div class="section-header">
@@ -127,6 +135,15 @@
           }))}
           searchQuery=""
         />
+      </section>
+    {:else if featuredTools.length > 0}
+      <section class="category-section bookmarks-section">
+        <div class="section-header">
+          <Icon name="star" size="md" />
+          <h2>Featured</h2>
+          <span class="count">{featuredTools.length}</span>
+        </div>
+        <ToolsGrid idPrefix="featured" tools={featuredTools} searchQuery="" />
       </section>
     {/if}
 
@@ -286,10 +303,10 @@
     flex-direction: column;
     gap: var(--spacing-md);
     background: var(--bg-tertiary);
-    background: radial-gradient(
-      color-mix(in srgb, var(--bg-tertiary), transparent 30%),
-      color-mix(in srgb, var(--bg-tertiary), var(--bg-primary) 60%)
-    );
+    // background: radial-gradient(
+    //   color-mix(in srgb, var(--bg-tertiary), transparent 30%),
+    //   color-mix(in srgb, var(--bg-tertiary), var(--bg-primary) 60%)
+    // );
     padding: var(--spacing-md);
     border-radius: var(--radius-md);
     border: 1px solid var(--border-primary);
@@ -370,6 +387,7 @@
     border: none;
     box-shadow: none;
     grid-column: 1 / -1;
+    max-height: none;
   }
 
   // Usage row: 2/3 and 1/3 split

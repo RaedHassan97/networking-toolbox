@@ -455,7 +455,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: var(--spacing-xs);
+      gap: var(--spacing-sm);
       width: 100%;
       position: relative;
       z-index: 1;
