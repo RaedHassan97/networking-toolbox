@@ -8,6 +8,7 @@
   import { bookmarks } from '$lib/stores/bookmarks';
   import { frequentlyUsedTools, toolUsage } from '$lib/stores/toolUsage';
   import { tooltip } from '$lib/actions/tooltip';
+  import { formatShortcut } from '$lib/utils/keyboard';
 
   interface Props {
     embedded?: boolean; // Whether this is embedded in a page vs popup modal
@@ -21,9 +22,6 @@
   let results = $state<NavItem[]>([]);
   let selectedIndex = $state(0);
   let searchInput: HTMLInputElement | undefined = $state();
-
-  const isMac = browser && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-  const shortcutKey = isMac ? '⌘' : 'Ctrl';
 
   function search(q: string): NavItem[] {
     if (!q.trim()) return [];
@@ -181,7 +179,7 @@
     class="action-button search-trigger"
     onclick={openSearch}
     aria-label="Open search"
-    use:tooltip={`Search (${shortcutKey}+K)`}
+    use:tooltip={`Search (${formatShortcut('^K')})`}
   >
     <Icon name="search" size="sm" />
   </button>

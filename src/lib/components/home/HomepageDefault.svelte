@@ -8,6 +8,9 @@
   import { bookmarks } from '$lib/stores/bookmarks';
   import { frequentlyUsedTools } from '$lib/stores/toolUsage';
   import Icon from '$lib/components/global/Icon.svelte';
+  import KeyboardShortcutChip from '$lib/components/common/KeyboardShortcutChip.svelte';
+  import { onMount, onDestroy } from 'svelte';
+  import { browser } from '$app/environment';
 
   interface Props {
     toolPages: NavItem[];
@@ -19,6 +22,8 @@
   let filteredTools: NavItem[] = $state(toolPages);
   let filteredReference: NavItem[] = $state(referencePages);
   let searchQuery: string = $state('');
+  let isSearchOpen: boolean = $state(false);
+  let searchFilterRef: any = $state();
 
   // Combined filtered list
   let allFiltered = $derived([...filteredTools, ...filteredReference]);
@@ -44,6 +49,69 @@
       );
     }
   });
+
+  // Open shortcuts dialog by dispatching Ctrl+/
+  function openShortcutsDialog() {
+    const event = new KeyboardEvent('keydown', {
+      key: '/',
+      ctrlKey: true,
+      bubbles: true,
+    });
+    window.dispatchEvent(event);
+  }
+
+  // Open global search by dispatching Ctrl+K
+  function openGlobalSearch() {
+    const event = new KeyboardEvent('keydown', {
+      key: 'k',
+      ctrlKey: true,
+      bubbles: true,
+    });
+    document.dispatchEvent(event);
+  }
+
+  // Handle keyboard typing to trigger local filter
+  function handleKeyDown(e: KeyboardEvent) {
+    // Ignore if modifier keys are pressed
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+    // Ignore if special keys (except Escape)
+    if (e.key.length > 1) {
+      // Handle Escape to close filter
+      if (e.key === 'Escape' && isSearchOpen) {
+        e.preventDefault();
+        searchQuery = '';
+        isSearchOpen = false;
+      }
+      return;
+    }
+
+    // Only alphanumeric characters and common punctuation
+    if (/^[a-zA-Z0-9\s]$/.test(e.key)) {
+      // Don't interfere if typing in an input/textarea
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
+
+      // Open local search if not already open and set the initial character
+      if (searchFilterRef && !isSearchOpen) {
+        e.preventDefault(); // Prevent default to capture the character
+        searchQuery = e.key; // Set the initial character
+        searchFilterRef.openSearch();
+      }
+    }
+  }
+
+  onMount(() => {
+    if (browser) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+  });
+
+  onDestroy(() => {
+    if (browser) {
+      window.removeEventListener('keydown', handleKeyDown);
+    }
+  });
 </script>
 
 <!-- Hero Section -->
@@ -55,8 +123,16 @@
   </div>
 </section>
 
-<!-- Search Filter -->
-<SearchFilter bind:filteredTools={allFiltered} bind:searchQuery />
+<!-- Search and Shortcuts Chips -->
+{#if !isSearchOpen}
+  <div class="shortcuts-wrapper">
+    <KeyboardShortcutChip label="Search" shortcut="^K" onclick={openGlobalSearch} />
+    <KeyboardShortcutChip label="Commansd" shortcut="^/" onclick={openShortcutsDialog} />
+  </div>
+{/if}
+
+<!-- Local Search Filter -->
+<SearchFilter bind:this={searchFilterRef} bind:filteredTools={allFiltered} bind:searchQuery bind:isSearchOpen />
 
 {#if searchQuery.trim() === ''}
   <!-- Bookmarks Section -->
@@ -125,6 +201,20 @@
           font-size: var(--font-size-md);
         }
       }
+    }
+  }
+
+  .shortcuts-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-lg);
+
+    @media (max-width: 640px) {
+      flex-direction: column;
+      align-items: stretch;
+      gap: var(--spacing-xs);
     }
   }
 

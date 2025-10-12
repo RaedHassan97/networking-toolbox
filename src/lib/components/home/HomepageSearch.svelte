@@ -109,7 +109,7 @@
   .search-container {
     max-width: 900px;
     margin: 0 auto;
-    width: 100%;
-    padding: 0 var(--spacing-md);
+    // width: 100%;
+    // padding: 0 var(--spacing-md);
   }
 </style>

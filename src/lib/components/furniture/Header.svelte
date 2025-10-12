@@ -5,8 +5,12 @@
   import BurgerMenu from '$lib/components/furniture/BurgerMenu.svelte';
   import TopNav from '$lib/components/furniture/TopNav.svelte';
   import SettingsMenu from '$lib/components/furniture/SettingsMenu.svelte';
+  import ShortcutsDialog from '$lib/components/furniture/ShortcutsDialog.svelte';
+  import { tooltip } from '$lib/actions/tooltip';
+  import { formatShortcut } from '$lib/utils/keyboard';
 
   let globalSearchRef: GlobalSearch;
+  let shortcutsDialogRef: ShortcutsDialog;
 </script>
 
 <header class="header">
@@ -30,6 +34,15 @@
         <div class="header-buttons">
           <GlobalSearch bind:this={globalSearchRef} />
 
+          <button
+            class="action-button shortcuts-trigger"
+            onclick={() => shortcutsDialogRef?.showDialog()}
+            aria-label="Keyboard shortcuts"
+            use:tooltip={`Shortcuts (${formatShortcut('^/')})`}
+          >
+            <Icon name="info" size="sm" />
+          </button>
+
           <SettingsMenu onSearchTrigger={() => globalSearchRef?.showSearch()} />
 
           <BurgerMenu />
@@ -39,17 +52,26 @@
   </div>
 </header>
 
+<ShortcutsDialog bind:this={shortcutsDialogRef} />
+
 <style lang="scss">
   .header-content {
     display: flex;
     align-items: center;
     justify-content: space-between;
     min-width: 0; // Allow flex children to shrink
+
+    @media (max-width: 480px) {
+      flex-direction: column;
+      gap: var(--spacing-md);
+    }
   }
 
   .logo {
     min-width: 15rem;
     flex-shrink: 0; // Prevent logo from shrinking
+    background: var(--bg-secondary);
+    z-index: 1;
   }
 
   .header-actions {
