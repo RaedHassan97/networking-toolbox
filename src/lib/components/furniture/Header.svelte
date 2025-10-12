@@ -1,5 +1,6 @@
 <script lang="ts">
   import { site } from '$lib/constants/site';
+  import { SITE_ICON } from '$lib/config/customizable-settings';
   import Icon from '$lib/components/global/Icon.svelte';
   import GlobalSearch from '$lib/components/global/GlobalSearch.svelte';
   import BurgerMenu from '$lib/components/furniture/BurgerMenu.svelte';
@@ -11,6 +12,8 @@
 
   let globalSearchRef: GlobalSearch;
   let shortcutsDialogRef: ShortcutsDialog;
+
+  const hasCustomLogo = SITE_ICON && SITE_ICON.trim() !== '';
 </script>
 
 <header class="header">
@@ -19,7 +22,11 @@
       <div class="logo">
         <div class="logo-icon">
           <a href="/" aria-label="Home">
-            <Icon name="networking" size="lg" />
+            {#if hasCustomLogo}
+              <img src={SITE_ICON} alt={site.name} class="logo-image" />
+            {:else}
+              <Icon name="networking" size="lg" />
+            {/if}
           </a>
         </div>
         <div>
@@ -72,6 +79,13 @@
     flex-shrink: 0; // Prevent logo from shrinking
     background: var(--bg-secondary);
     z-index: 1;
+
+    .logo-image {
+      width: 2.5rem;
+      height: 2.5rem;
+      object-fit: contain;
+      display: block;
+    }
   }
 
   .header-actions {

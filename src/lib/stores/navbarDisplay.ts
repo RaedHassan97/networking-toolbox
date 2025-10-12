@@ -1,5 +1,6 @@
 import { writable } from 'svelte/store';
 import { browser } from '$app/environment';
+import { DEFAULT_NAVBAR_DISPLAY } from '$lib/config/customizable-settings';
 
 export type NavbarDisplayMode = 'default' | 'bookmarked' | 'frequent' | 'none';
 
@@ -35,18 +36,24 @@ export const navbarDisplayOptions: NavbarDisplayOption[] = [
   },
 ];
 
+// Validate that a navbar display mode is valid
+function isValidNavbarDisplay(mode: string | null): boolean {
+  if (!mode) return false;
+  return navbarDisplayOptions.some((option) => option.id === mode);
+}
+
 // Get initial value from localStorage (runs immediately on import)
 function getInitialNavbarDisplay(): NavbarDisplayMode {
+  const validDefault = isValidNavbarDisplay(DEFAULT_NAVBAR_DISPLAY) ? DEFAULT_NAVBAR_DISPLAY : 'default';
   if (browser) {
     try {
       const stored = localStorage.getItem('navbar-display');
-      const isValidMode = navbarDisplayOptions.some((option) => option.id === stored);
-      return isValidMode ? (stored as NavbarDisplayMode) : 'default';
+      return isValidNavbarDisplay(stored) ? (stored as NavbarDisplayMode) : validDefault;
     } catch {
-      return 'default';
+      return validDefault;
     }
   }
-  return 'default';
+  return validDefault;
 }
 
 function createNavbarDisplayStore() {

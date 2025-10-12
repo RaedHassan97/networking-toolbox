@@ -1,5 +1,6 @@
 import { writable } from 'svelte/store';
 import { browser } from '$app/environment';
+import { DEFAULT_THEME } from '$lib/config/customizable-settings';
 
 export type ThemeOption = string;
 
@@ -176,8 +177,14 @@ export const themes: Theme[] = [
   },
 ];
 
+function isValidTheme(theme: string | null) {
+  if (!theme) return false;
+  return themes.some((t) => t.id === theme && t.available);
+}
+
 function createThemeStore() {
-  const { subscribe, set, update } = writable<ThemeOption>('dark');
+  const defaultTheme = isValidTheme(DEFAULT_THEME) ? DEFAULT_THEME : 'dark';
+  const { subscribe, set, update } = writable<ThemeOption>(defaultTheme);
 
   return {
     subscribe,
@@ -186,8 +193,7 @@ function createThemeStore() {
     init: () => {
       if (browser) {
         const saved = localStorage.getItem(STORAGE_KEY);
-        const isValidTheme = themes.some((t) => t.id === saved && t.available);
-        const initialTheme = isValidTheme ? (saved as ThemeOption) : 'dark';
+        const initialTheme = isValidTheme(saved) ? (saved as ThemeOption) : defaultTheme;
 
         set(initialTheme);
 
@@ -196,7 +202,7 @@ function createThemeStore() {
 
         return initialTheme;
       }
-      return 'dark';
+      return defaultTheme;
     },
 
     // Set theme and persist to localStorage
