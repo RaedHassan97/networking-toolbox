@@ -23,35 +23,75 @@
   let selectedIndex = $state(0);
   let searchInput: HTMLInputElement | undefined = $state();
 
+  // Levenshtein distance for fuzzy matching
+
+  /**
+   * Calculate the Levenshtein distance between two strings (aka similarity score)
+   * Ok, chill before you scream "import a library"...
+   * It's not as bad as it looks....  Basically, we're just creating a 2D array
+   * and filling it in based on character comparisons. The array size is small
+   * (query length x label length) so performance is not a big deal here.
+   * It's just a rudimentary fuzzy search to catch typos and close matches.
+   * @param a (string 1)
+   * @param b (string 2)
+   */
+  function levenshtein(a: string, b: string): number {
+    const matrix: number[][] = [];
+    for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+    for (let j = 0; j <= a.length; j++) matrix[0]![j] = j;
+    for (let i = 1; i <= b.length; i++) {
+      for (let j = 1; j <= a.length; j++) {
+        if (b.charAt(i - 1) === a.charAt(j - 1)) {
+          matrix[i]![j] = matrix[i - 1]![j - 1]!;
+        } else {
+          matrix[i]![j] = Math.min(matrix[i - 1]![j - 1]! + 1, matrix[i]![j - 1]! + 1, matrix[i - 1]![j]! + 1);
+        }
+      }
+    }
+    return matrix[b.length]![a.length]!;
+  }
+
+  // Get smart suggestions when no results
+  function getSuggested(): NavItem[] {
+    const fromStores = [...$frequentlyUsedTools, ...$bookmarks]
+      .map((item) => ALL_PAGES.find((p) => p.href === item.href))
+      .filter((item): item is NavItem => item !== undefined);
+
+    const combined = [...fromStores, ...ALL_PAGES]
+      .filter((item, idx, arr) => arr.findIndex((i) => i.href === item.href) === idx)
+      .sort(() => Math.random() - 0.5);
+    return combined.slice(0, 12);
+  }
+
   function search(q: string): NavItem[] {
     if (!q.trim()) return [];
 
     const normalizedQuery = q.toLowerCase().trim();
     const tokens = normalizedQuery.split(/\s+/);
+    const bookmarkedHrefs = new Set($bookmarks.map((b) => b.href));
+    const frequentHrefs = new Set($frequentlyUsedTools.map((t) => t.href));
 
-    return ALL_PAGES.map((page) => {
+    const results = ALL_PAGES.map((page) => {
       let score = 0;
-      const searchText = `${page.label} ${page.description || ''} ${page.keywords?.join(' ') || ''}`.toLowerCase();
+      const label = page.label.toLowerCase();
+      const searchText = `${label} ${page.description || ''} ${page.keywords?.join(' ') || ''}`.toLowerCase();
 
       // Exact label match (highest priority)
-      if (page.label.toLowerCase() === normalizedQuery) score += 1000;
+      if (label === normalizedQuery) score += 1000;
 
       // Label starts with query
-      if (page.label.toLowerCase().startsWith(normalizedQuery)) score += 500;
+      if (label.startsWith(normalizedQuery)) score += 500;
 
       // Label contains query
-      if (page.label.toLowerCase().includes(normalizedQuery)) score += 200;
+      if (label.includes(normalizedQuery)) score += 200;
 
       // All tokens found
-      const allTokensFound = tokens.every((token) => searchText.includes(token));
-      if (allTokensFound) score += 100;
+      if (tokens.every((token) => searchText.includes(token))) score += 100;
 
       // Keywords match
       if (page.keywords) {
         tokens.forEach((token) => {
-          if (page.keywords!.some((keyword) => keyword.toLowerCase().includes(token))) {
-            score += 50;
-          }
+          if (page.keywords!.some((kw) => kw.toLowerCase().includes(token))) score += 50;
         });
       }
 
@@ -60,11 +100,92 @@
         score += 25;
       }
 
+      // Boost for bookmarked/frequent
+      if (bookmarkedHrefs.has(page.href)) score += 15;
+      if (frequentHrefs.has(page.href)) score += 10;
+
       return { ...page, score };
     })
-      .filter((page) => page.score > 0)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 8);
+      .filter((page) => page.score > 10)
+      .sort((a, b) => b.score - a.score);
+
+    // If few/no results and query is reasonable length, do fuzzy search
+    if (results.length < 3 && normalizedQuery.length >= 2 && normalizedQuery.length <= 20) {
+      const fuzzyResults = ALL_PAGES.map((page) => {
+        let score = results.find((r) => r.href === page.href)?.score || 0;
+        const label = page.label.toLowerCase();
+        const words = label.split(/\s+/);
+        let hasMeaningfulMatch = false;
+
+        // Acronym match (e.g., "dc" matches "DNS Check")
+        const acronym = words.map((w) => w[0]).join('');
+        if (acronym === normalizedQuery) {
+          score += 300;
+          hasMeaningfulMatch = true;
+        }
+        if (acronym.startsWith(normalizedQuery)) {
+          score += 150;
+          hasMeaningfulMatch = true;
+        }
+
+        // Fuzzy string match with Levenshtein distance
+        tokens.forEach((token) => {
+          if (token.length < 2) return; // Skip single chars
+
+          const distance = levenshtein(token, label);
+          const similarity = 1 - distance / Math.max(token.length, label.length);
+          if (similarity > 0.65) {
+            score += Math.floor(similarity * 100);
+            hasMeaningfulMatch = true;
+          }
+
+          // Check against individual words
+          words.forEach((word) => {
+            if (word.length < 2) return;
+            const wordDist = levenshtein(token, word);
+            const wordSim = 1 - wordDist / Math.max(token.length, word.length);
+            if (wordSim > 0.7) {
+              score += Math.floor(wordSim * 80);
+              hasMeaningfulMatch = true;
+            }
+          });
+
+          // Check keywords with fuzzy match
+          page.keywords?.forEach((keyword) => {
+            const kwDist = levenshtein(token, keyword.toLowerCase());
+            const kwSim = 1 - kwDist / Math.max(token.length, keyword.length);
+            if (kwSim > 0.75) {
+              score += Math.floor(kwSim * 60);
+              hasMeaningfulMatch = true;
+            }
+          });
+        });
+
+        // Partial word boundary match (only if token is significant portion of word)
+        tokens.forEach((token) => {
+          if (token.length >= 3) {
+            words.forEach((word) => {
+              if (word.includes(token) && token.length / word.length > 0.6) {
+                score += 40;
+                hasMeaningfulMatch = true;
+              }
+            });
+          }
+        });
+
+        // Boost for bookmarked/frequent (but don't count as meaningful match)
+        if (bookmarkedHrefs.has(page.href)) score += 15;
+        if (frequentHrefs.has(page.href)) score += 10;
+
+        return { ...page, score, hasMeaningfulMatch };
+      })
+        .filter((page) => page.score > 100 && page.hasMeaningfulMatch) // Must have meaningful match
+        .sort((a, b) => b.score - a.score);
+
+      return fuzzyResults.slice(0, 8);
+    }
+
+    return results.slice(0, 8);
   }
 
   // Using a separate internal function to avoid reactivity warnings
@@ -235,7 +356,27 @@
   {:else if query.trim()}
     <div class="no-results">
       <Icon name="search" size="md" />
-      <span>No results found for "{query}"</span>
+      <span>No results found for "{query}" (yet!)</span>
+    </div>
+    <div class="suggested-section">
+      <div class="suggested-header">
+        <Icon name="star" size="xs" />
+        <span>Suggested</span>
+      </div>
+      <div class="suggested-list">
+        {#each getSuggested() as item (item.href)}
+          <button
+            class="suggested-item"
+            onclick={() => {
+              goto(item.href);
+              if (!embedded) close();
+            }}
+          >
+            <Icon name={item.icon || 'search'} size="xs" />
+            <span>{item.label}</span>
+          </button>
+        {/each}
+      </div>
     </div>
   {:else}
     <div class="search-help">
@@ -345,11 +486,11 @@
     inset: 0;
     background: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(4px);
-    z-index: 1000;
+    z-index: 5;
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    padding-top: 15vh;
+    padding-top: 12vh;
     animation: fadeIn var(--transition-fast);
 
     @media (max-width: 768px) {
@@ -436,7 +577,7 @@
   }
 
   .search-results {
-    max-height: 60vh;
+    max-height: 70vh;
     overflow-y: auto;
 
     @media (max-width: 768px) {
@@ -525,14 +666,81 @@
     flex-direction: column;
     align-items: center;
     gap: var(--spacing-md);
-    padding: var(--spacing-2xl);
+    padding: var(--spacing-2xl) var(--spacing-2xl) var(--spacing-md);
     color: var(--text-secondary);
     text-align: center;
 
     @media (max-width: 768px) {
-      padding: var(--spacing-xl) var(--spacing-md);
-      min-height: 50vh;
-      justify-content: center;
+      padding: var(--spacing-xl) var(--spacing-md) var(--spacing-md);
+    }
+  }
+
+  .suggested-section {
+    padding: var(--spacing-md) var(--spacing-lg) var(--spacing-lg);
+    border-top: 1px solid var(--border-secondary);
+
+    @media (max-width: 768px) {
+      padding: var(--spacing-md);
+    }
+  }
+
+  .suggested-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: var(--spacing-sm);
+
+    :global(svg) {
+      color: var(--color-warning);
+    }
+  }
+
+  .suggested-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+  }
+
+  .suggested-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-secondary);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: var(--font-size-xs);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    max-width: 180px;
+
+    &:hover,
+    &:focus {
+      background: var(--surface-hover);
+      border-color: var(--color-warning);
+      transform: translateY(-1px);
+      outline: none;
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+
+    span {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    :global(svg) {
+      flex-shrink: 0;
+      color: var(--text-tertiary);
     }
   }
 
