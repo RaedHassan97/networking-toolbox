@@ -4,7 +4,7 @@
   import { resolve } from '$app/paths';
   import Icon from '$lib/components/global/Icon.svelte';
 
-  $: currentPath = $page.url.pathname;
+  $: currentPath = $page.url?.pathname ?? '/';
   $: isOfflinePage = currentPath === '/offline';
   $: isActualTool = isDownloadableTool(currentPath);
   $: worksOffline = isOfflineCapable(currentPath);

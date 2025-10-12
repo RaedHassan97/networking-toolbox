@@ -4,8 +4,8 @@
   import { site } from '$lib/constants/site';
   import Icon from '$lib/components/global/Icon.svelte';
 
-  $: status = $page.status;
-  $: message = $page.error?.message || 'An unexpected error occurred';
+  $: status = $page.status ?? 500;
+  $: message = $page.error?.message ?? 'An unexpected error occurred';
 
   const errorTypes = {
     404: {

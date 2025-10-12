@@ -44,7 +44,7 @@
   const subnetInfo = derived(cidr, ($c) => getSubnetInfo($c));
 
   // Dynamic title based on current route
-  $: isCidrToMask = $page.url.pathname.includes('cidr-to-subnet-mask');
+  $: isCidrToMask = ($page.url?.pathname ?? '/').includes('cidr-to-subnet-mask');
   $: title = isCidrToMask ? 'CIDR → Subnet Mask Converter' : 'Subnet Mask → CIDR Converter';
   $: description = isCidrToMask
     ? 'Convert CIDR notation to subnet mask format'

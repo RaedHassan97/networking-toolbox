@@ -69,12 +69,11 @@ export const homepageLayoutOptions: HomepageLayoutOption[] = [
   },
 ];
 
-// Get initial value from data attribute or localStorage (runs immediately on import)
+// Get initial value from localStorage (runs immediately on import)
 function getInitialLayout(): HomepageLayoutMode {
-  if (typeof window !== 'undefined') {
+  if (browser) {
     try {
-      const dataAttr = document.documentElement.getAttribute('data-initial-layout');
-      const stored = dataAttr || localStorage.getItem('homepage-layout');
+      const stored = localStorage.getItem('homepage-layout');
       const isValidMode = homepageLayoutOptions.some((option) => option.id === stored);
       return isValidMode ? (stored as HomepageLayoutMode) : 'categories';
     } catch {

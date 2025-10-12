@@ -11,27 +11,35 @@ export interface BookmarkedTool {
 
 const STORAGE_KEY = 'bookmarked-tools';
 
+// Get initial bookmarks from localStorage (runs immediately on import)
+function getInitialBookmarks(): BookmarkedTool[] {
+  if (browser) {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        return JSON.parse(stored);
+      }
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
 function createBookmarksStore() {
-  const { subscribe, set, update } = writable<BookmarkedTool[]>([]);
+  const { subscribe, set, update } = writable<BookmarkedTool[]>(getInitialBookmarks());
   let cachingInitialized = false; // Prevent multiple cache requests
 
   return {
     subscribe,
     init: () => {
       if (browser) {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored) {
-          try {
-            const bookmarks = JSON.parse(stored);
-            set(bookmarks);
-            // Cache all existing bookmarks for offline access (only once per session)
-            if (bookmarks.length > 0 && !cachingInitialized) {
-              cachingInitialized = true;
-              setTimeout(() => cacheAllBookmarks(bookmarks), 1000); // Delay to ensure SW is ready
-            }
-          } catch {
-            set([]);
-          }
+        const bookmarks = getInitialBookmarks();
+        set(bookmarks);
+        // Cache all existing bookmarks for offline access (only once per session)
+        if (bookmarks.length > 0 && !cachingInitialized) {
+          cachingInitialized = true;
+          setTimeout(() => cacheAllBookmarks(bookmarks), 1000); // Delay to ensure SW is ready
         }
       }
     },

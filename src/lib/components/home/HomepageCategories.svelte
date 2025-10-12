@@ -19,14 +19,6 @@
 
   let { toolPages, referencePages }: Props = $props();
 
-  // Get featured tools (up to 12)
-  const featuredTools = $derived(
-    toolPages
-      .filter((tool) => tool.featured === true)
-      // .sort(() => Math.random() - 0.5)
-      .slice(0, 6),
-  );
-
   // Category configuration - easily extensible for future customization
   interface CategorySection {
     id: string;
@@ -35,26 +27,6 @@
     basePath: string;
     items: NavItem[];
   }
-
-  const categories: CategorySection[] = $derived(
-    TOP_NAV.filter((nav) => nav.href !== '/reference')
-      .map((nav) => {
-        const subItems = SUB_NAV[nav.href] || [];
-        return {
-          id: nav.href.slice(1), // Remove leading slash
-          title: nav.label,
-          icon: getIconForCategory(nav.href),
-          basePath: nav.href,
-          items: extractNavItems(subItems),
-        };
-      })
-      .sort((a, b) => {
-        // Diagnostics first, then others
-        if (a.id === 'diagnostics') return -1;
-        if (b.id === 'diagnostics') return 1;
-        return 0;
-      }),
-  );
 
   // Get appropriate icon for each category
   function getIconForCategory(path: string): string {
@@ -67,6 +39,33 @@
     };
     return iconMap[path] || 'folder';
   }
+
+  // Memoized categories - computed once at module scope (static data)
+  const categories: CategorySection[] = TOP_NAV.filter((nav) => nav.href !== '/reference')
+    .map((nav) => {
+      const subItems = SUB_NAV[nav.href] || [];
+      return {
+        id: nav.href.slice(1), // Remove leading slash
+        title: nav.label,
+        icon: getIconForCategory(nav.href),
+        basePath: nav.href,
+        items: extractNavItems(subItems),
+      };
+    })
+    .sort((a, b) => {
+      // Diagnostics first, then others
+      if (a.id === 'diagnostics') return -1;
+      if (b.id === 'diagnostics') return 1;
+      return 0;
+    });
+
+  // Get featured tools (up to 6)
+  const featuredTools = $derived(
+    toolPages
+      .filter((tool) => tool.featured === true)
+      // .sort(() => Math.random() - 0.5)
+      .slice(0, 6),
+  );
 
   // Convert tool usage to NavItem format
   const mostUsedItems = $derived(

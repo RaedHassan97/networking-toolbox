@@ -4,19 +4,26 @@
   import NoResults from './NoResults.svelte';
   import type { NavItem } from '$lib/constants/nav';
 
-  export let tools: NavItem[] = ALL_PAGES;
-  export let searchQuery: string = '';
-  export let idPrefix: string = 'main-';
-  export let size: 'default' | 'small' | 'compact' = 'default';
+  interface Props {
+    tools?: NavItem[];
+    searchQuery?: string;
+    idPrefix?: string;
+    size?: 'default' | 'small' | 'compact';
+  }
+
+  let { tools = ALL_PAGES, searchQuery = '', idPrefix = 'main-', size = 'default' }: Props = $props();
 
   // Remove duplicates based on href, keeping the first occurrence
   // Also filter out items without a label
-  $: uniqueTools = tools
-    .filter((tool) => tool.label)
-    .filter((tool, index, array) => array.findIndex((t) => t.href === tool.href) === index);
+  // Properly memoized with $derived - only recomputes when tools array changes
+  const uniqueTools = $derived(
+    tools
+      .filter((tool) => tool.label)
+      .filter((tool, index, array) => array.findIndex((t) => t.href === tool.href) === index),
+  );
 
   // Dynamic minimum column width based on size
-  $: minColWidth = size === 'compact' ? '140px' : size === 'small' ? '200px' : '280px';
+  const minColWidth = $derived(size === 'compact' ? '140px' : size === 'small' ? '200px' : '280px');
 </script>
 
 {#if uniqueTools.length === 0 && searchQuery}

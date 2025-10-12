@@ -33,7 +33,7 @@
 
   // Get page-specific metadata or fallback to site defaults
   const seoData = $derived.by(() => {
-    const currentPath = $page.url.pathname;
+    const currentPath = $page.url?.pathname ?? '/';
     const pageDetails = getPageDetails(currentPath);
 
     return {
@@ -50,7 +50,7 @@
     void faviconTrigger; // Include in order to force updates when theme changes
 
     // Check if we're on an error page
-    const isErrorPage = $page.status >= 400;
+    const isErrorPage = ($page.status ?? 200) >= 400;
     if (isErrorPage) {
       const errorFaviconDataUri = generateFaviconDataUri('lost');
       if (errorFaviconDataUri) {
@@ -58,7 +58,7 @@
       }
     }
 
-    const currentPath = $page.url.pathname;
+    const currentPath = $page.url?.pathname ?? '/';
     const pageDetailsWithIcon = getPageDetailsWithIcon(currentPath);
 
     if (pageDetailsWithIcon?.icon) {
@@ -122,7 +122,7 @@
 
   // Track tool visits when page changes
   $effect(() => {
-    const currentPath = $page.url.pathname;
+    const currentPath = $page.url?.pathname ?? '/';
 
     // Check if current path is a tool page
     const toolPage = ALL_PAGES.find((tool) => tool.href === currentPath);

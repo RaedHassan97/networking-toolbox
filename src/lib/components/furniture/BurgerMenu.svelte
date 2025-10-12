@@ -126,7 +126,8 @@
 
   // Check if a link is currently active
   function isActiveLink(href: string): boolean {
-    return $page.url.pathname === href || $page.url.pathname.startsWith(href + '/');
+    const pathname = $page.url?.pathname ?? '/';
+    return pathname === href || pathname.startsWith(href + '/');
   }
 
   // Get nav groups for organized display

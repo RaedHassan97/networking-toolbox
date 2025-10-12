@@ -4,7 +4,7 @@
 
   let { children } = $props();
 
-  const isLicensePage = $derived($page.url.pathname.includes('/license'));
+  const isLicensePage = $derived(($page.url?.pathname ?? '/').includes('/license'));
 </script>
 
 <main class="card about-content" class:license-page={isLicensePage}>

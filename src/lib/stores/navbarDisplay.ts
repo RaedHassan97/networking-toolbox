@@ -35,12 +35,11 @@ export const navbarDisplayOptions: NavbarDisplayOption[] = [
   },
 ];
 
-// Get initial value from data attribute or localStorage (runs immediately on import)
+// Get initial value from localStorage (runs immediately on import)
 function getInitialNavbarDisplay(): NavbarDisplayMode {
-  if (typeof window !== 'undefined') {
+  if (browser) {
     try {
-      const dataAttr = document.documentElement.getAttribute('data-initial-navbar');
-      const stored = dataAttr || localStorage.getItem('navbar-display');
+      const stored = localStorage.getItem('navbar-display');
       const isValidMode = navbarDisplayOptions.some((option) => option.id === stored);
       return isValidMode ? (stored as NavbarDisplayMode) : 'default';
     } catch {

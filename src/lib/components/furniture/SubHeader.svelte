@@ -2,7 +2,7 @@
   import { page } from '$app/stores';
   import { SUB_NAV, findSectionKey, isActive } from '$lib/constants/nav';
 
-  $: currentPath = $page.url.pathname;
+  $: currentPath = $page.url?.pathname ?? '/';
   $: sectionKey = findSectionKey(currentPath); // e.g. '/reference' or '/cidr'
   $: navStructure = sectionKey ? SUB_NAV[sectionKey] : null;
 

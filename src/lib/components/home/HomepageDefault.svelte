@@ -25,8 +25,8 @@
   let isSearchOpen: boolean = $state(false);
   let searchFilterRef: any = $state();
 
-  // Combined filtered list
-  let allFiltered = $derived([...filteredTools, ...filteredReference]);
+  // Combined filtered list - must be $state for two-way binding with SearchFilter
+  let allFiltered: NavItem[] = $state([...toolPages, ...referencePages]);
 
   // Update filtered items when search changes
   $effect(() => {
@@ -48,6 +48,8 @@
           page.keywords?.some((keyword) => keyword.toLowerCase().includes(query)),
       );
     }
+    // Update combined list
+    allFiltered = [...filteredTools, ...filteredReference];
   });
 
   // Open shortcuts dialog by dispatching Ctrl+/
